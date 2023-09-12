@@ -7,26 +7,33 @@ function display() {
         var tasks = sections[i].tasks;
         var newSection = document.createElement("div");
         newSection.className = "section";
-        newSection.id = i;
+        newSection.dataset.sec = i;
         var dropDownContainer = document.createElement("div");
         var tripleDot = document.createElement("img");
         tripleDot.src = "../images/dots-vertical.svg";
         tripleDot.style.width = "20px";
         tripleDot.className = "triple-dot";
-        tripleDot.addEventListener("click", (event) => {
-            var drop = event.currentTarget.parentElement.querySelector(".head-drop-down");
-            drop.style.display = "block";
-            drop.classList.add("active");
-        });
-        var headerDropDown = document.createElement("div");
-        headerDropDown.className = "head-drop-down";
+        var dropDown = document.createElement("div");
+        dropDown.className = "drop-down";
+        dropDown.dataset.sec = i;
         var del = document.createElement("div");
         del.textContent = "Delete";
-        headerDropDown.appendChild(del);
+        del.addEventListener("click", (event) => {
+            var secNum = event.currentTarget.parentElement.dataset.sec;
+            sections.splice(secNum, 1);
+            var rem = document.querySelector("[data-sec=" + CSS.escape(secNum) + "]");
+            var container = rem.querySelector(".section-container");
+            container.style.opacity = "0";
+            rem.style.maxHeight = "0px";
+            rem.style.fontSize = "0px";
+            setTimeout(function() {rem.remove();}, 500);
+        });
+        dropDown.appendChild(del);
         dropDownContainer.appendChild(tripleDot);
-        dropDownContainer.appendChild(headerDropDown);
+        dropDownContainer.appendChild(dropDown);
         var container = document.createElement("div");
         container.className = "section-container";
+        container.dataset.sec = i;
         var sectionHeader = document.createElement("div");
         sectionHeader.textContent = val;
         sectionHeader.className = "section-header";
@@ -52,7 +59,7 @@ function display() {
                 var inp = event.currentTarget;
                 if (inp.value !== "") {
                     var t = task(inp.value);
-                    sections[parseInt(inp.parentElement.parentElement.parentElement.id)].tasks.push(t);
+                    sections[parseInt(inp.parentElement.parentElement.parentElement.dataset.sec)].tasks.push(t);
                     display();
                     inp.value = "";
                     inp.blur();
@@ -67,7 +74,8 @@ function display() {
             var t = document.createElement("div");
             t.className = "task";
             t.textContent = tasks[x].name;
-            t.appendChild(tripleDot.cloneNode("true"));
+            t.dataset.sec = i;
+            t.dataset.task = x;
             t.addEventListener("mouseenter", (event) => {
                 var img = event.currentTarget.querySelector("img");
                 img.style.opacity = "1";
@@ -76,20 +84,45 @@ function display() {
                 var img = event.currentTarget.querySelector("img");
                 img.style.opacity = "0";
             });
+            var taskDropDownContainer = document.createElement("div");
+            var taskDropDown = document.createElement("div");
+            taskDropDown.className = "drop-down";
+            var taskDel = document.createElement("div");
+            taskDel.textContent = "Delete";
+            taskDropDown.dataset.sec = i;
+            taskDropDown.dataset.task = x;
+            taskDel.addEventListener("click", (event) => {
+                var secNum = event.currentTarget.parentElement.dataset.sec;
+                var task = event.currentTarget.parentElement.dataset.task;
+                sections[secNum].removeTask(task);
+                var rem = document.querySelector("[data-sec=" + CSS.escape(secNum) + "][data-task=" + CSS.escape(task) + "]");
+                var drop = rem.children[0];
+                drop.style.display = "none";
+                rem.style.maxHeight = "0px";
+                rem.style.opacity = "0";
+                rem.style.fontSize = "0";
+                rem.style.padding = "0";
+                setTimeout(function() {rem.remove();}, 700);
+            });
+            taskDropDown.appendChild(taskDel);
+            taskDropDownContainer.appendChild(tripleDot.cloneNode("true"));
+            taskDropDownContainer.appendChild(taskDropDown);
+            t.appendChild(taskDropDownContainer);
             container.insertBefore(t, addTaskDiv);
         }
         content.insertBefore(newSection, addSectionDiv);
     }
 }
 
+function convertRemToPixels(rem) {    
+    return rem * parseFloat(getComputedStyle(document.documentElement).fontSize);
+}
+
 const section = (head) => {
     let header = head;
     let tasks = [];
     const addTask = (t) => {tasks.push(t);};
-    const removeTask = (t) => {
-        var ind = tasks.indexOf(t);
-        if (ind !== -1) tasks.splice(ind, ind);
-    };
+    const removeTask = (ind) => {tasks.splice(ind, 1);};
     return {header, tasks, addTask, removeTask};
 }
 
@@ -103,13 +136,34 @@ const task = (val) => {
 var sections = [];
 const addSectionDiv = document.getElementById("add-section");
 const input = document.getElementById("new-section-name");
-window.addEventListener("click", () => {
+
+document.addEventListener("click", (event) => {
     var act = document.querySelector(".active");
-    if (act) {
+    if (act && act.parentElement !== event.target.parentElement && !act.contains(event.target)) {
         act.classList.remove("active");
-        act.style.display = "none";
+        act.style.opacity = "0";
+        if (act.parentElement.parentElement.classList.contains("task")) {
+            act.style.bottom = "-" + (act.offsetHeight - convertRemToPixels(0.5) - 15) + "px";
+        }
+        else act.style.bottom = "-" + (act.offsetHeight - 15) + "px";
+        setTimeout(function() {act.style.visibility = "hidden";}, 300);
+    }
+    if (event.target.classList.contains("triple-dot")) {
+        var drop = event.target.parentElement.querySelector(".drop-down");
+        drop.classList.add("active");
+        if (drop.parentElement.parentElement.classList.contains("task")) {
+            drop.style.bottom = "-" + (drop.offsetHeight - convertRemToPixels(0.5) - 15) + "px";
+        }
+        else drop.style.bottom = "-" + (drop.offsetHeight - 15) + "px";
+        drop.style.visibility = "visible";
+        if (drop.parentElement.parentElement.classList.contains("task")) {
+            drop.style.bottom = "-" + (drop.offsetHeight - convertRemToPixels(0.5)) + "px";
+        }
+        else drop.style.bottom = "-" + (drop.offsetHeight) + "px";
+        drop.style.opacity = "1";
     }
 });
+
 addSectionDiv.addEventListener("click", () => {input.focus();});
 input.addEventListener("focusin", () => {
     addSectionDiv.style.opacity = "1";
