@@ -1,54 +1,4 @@
-function display() {
-    const content = document.getElementById("content");
-    content.innerHTML = "";
-    content.appendChild(addSectionDiv);
-    for (var i = 0;i < sections.length;i++) {
-        var val = sections[i].header;
-        var tasks = sections[i].tasks;
-        for (var x = 0;x < tasks.length;x++) {
-            var t = document.createElement("div");
-            t.className = "task";
-            t.textContent = tasks[x].name;
-            t.dataset.sec = i;
-            t.dataset.task = x;
-            t.addEventListener("mouseenter", (event) => {
-                var img = event.currentTarget.querySelector("img");
-                img.style.opacity = "1";
-            });
-            t.addEventListener("mouseleave", (event) => {
-                var img = event.currentTarget.querySelector("img");
-                img.style.opacity = "0";
-            });
-            var taskDropDownContainer = document.createElement("div");
-            var taskDropDown = document.createElement("div");
-            taskDropDown.className = "drop-down";
-            var taskDel = document.createElement("div");
-            taskDel.textContent = "Delete";
-            taskDropDown.dataset.sec = i;
-            taskDropDown.dataset.task = x;
-            taskDel.addEventListener("click", (event) => {
-                var secNum = event.currentTarget.parentElement.dataset.sec;
-                var task = event.currentTarget.parentElement.dataset.task;
-                sections[secNum].removeTask(task);
-                var rem = document.querySelector("[data-sec=" + CSS.escape(secNum) + "][data-task=" + CSS.escape(task) + "]");
-                var drop = rem.children[0];
-                drop.style.display = "none";
-                rem.style.maxHeight = "0px";
-                rem.style.opacity = "0";
-                rem.style.fontSize = "0";
-                rem.style.padding = "0";
-                setTimeout(function() {rem.remove();}, 300);
-            });
-            taskDropDown.appendChild(taskDel);
-            taskDropDownContainer.appendChild(tripleDot.cloneNode("true"));
-            taskDropDownContainer.appendChild(taskDropDown);
-            t.appendChild(taskDropDownContainer);
-            container.insertBefore(t, addTaskDiv);
-        }
-        content.insertBefore(newSection, addSectionDiv);
-    }
-}
-function addSection() {
+function addSection(colNum) {
     const secNumber = sections.length - 1;
     const newSection = document.createElement("div");
     newSection.className = "section";
@@ -63,10 +13,9 @@ function addSection() {
     dropDown.dataset.sec = secNumber;
     const del = document.createElement("div");
     del.textContent = "Delete";
-    del.addEventListener("click", (event) => {
-        const secNum = event.currentTarget.parentElement.dataset.sec;
-        sections.splice(secNum, 1);
-        const rem = document.querySelector("[data-sec=" + CSS.escape(secNum) + "]");
+    del.addEventListener("click", () => {
+        sections.splice(secNumber, 1);
+        const rem = document.querySelector("[data-sec=" + CSS.escape(secNumber) + "]");
         const container = rem.querySelector(".section-container");
         container.style.opacity = "0";
         rem.style.maxHeight = "0px";
@@ -115,14 +64,9 @@ function addSection() {
     container.appendChild(sectionHeader);
     container.appendChild(addTaskDiv);
     newSection.appendChild(container);
-    const addSec = document.getElementById("add-section");
-    const toAdd = addSec.parentElement;
-    toAdd.appendChild(newSection);
-    const colNum = parseInt(toAdd.dataset.col) + 1;
-    var col;
-    if (colNum === 3) col = document.querySelector("[data-col=" + CSS.escape(0) + "]");
-    else col = document.querySelector("[data-col=" + CSS.escape(colNum) + "]");
-    col.appendChild(addSec);
+    const col = document.querySelector("[data-col=" + CSS.escape(colNum) + "]");
+    const addSec = col.querySelector(".add-section");
+    col.insertBefore(newSection, addSec);
 }
 
 function addTask(task, secNumber) {
@@ -140,18 +84,16 @@ function addTask(task, secNumber) {
         var img = event.currentTarget.querySelector("img");
         img.style.opacity = "0";
     });
-    var taskDropDownContainer = document.createElement("div");
-    var taskDropDown = document.createElement("div");
+    const taskDropDownContainer = document.createElement("div");
+    const taskDropDown = document.createElement("div");
     taskDropDown.className = "drop-down";
-    var taskDel = document.createElement("div");
+    const taskDel = document.createElement("div");
     taskDel.textContent = "Delete";
     taskDropDown.dataset.sec = secNumber;
     taskDropDown.dataset.task = taskNumber;
     taskDel.addEventListener("click", () => {
-        var secNum = secNumber;
-        var task = taskNumber;
         sections[secNum].removeTask(task);
-        var rem = document.querySelector("[data-sec=" + CSS.escape(secNum) + "][data-task=" + CSS.escape(task) + "]");
+        var rem = document.querySelector("[data-sec=" + CSS.escape(secNumber) + "][data-task=" + CSS.escape(taskNumber) + "]");
         var drop = rem.children[0];
         drop.style.display = "none";
         rem.style.maxHeight = "0px";
@@ -177,6 +119,28 @@ function convertRemToPixels(rem) {
     return rem * parseFloat(getComputedStyle(document.documentElement).fontSize);
 }
 
+function addSectionEvent(div) {
+    const input = div.querySelector(".new-section-input");
+    div.addEventListener("click", () => {input.focus();});
+    input.addEventListener("focusin", () => {
+        div.style.opacity = "1";
+        div.style.cursor = "text";
+    });
+    input.addEventListener("focusout", () => {
+        div.style.opacity = "0.5";
+        div.style.cursor = "pointer";
+    });
+    input.addEventListener("keydown", (event) => {
+        if (event.code === "Enter" && input.value !== "") {
+            var newSection = section(input.value);
+            sections.push(newSection);
+            addSection(event.currentTarget.parentElement.dataset.col);
+            input.value = "";
+            input.blur();
+        }
+    });
+}
+
 const section = (head) => {
     let header = head;
     let tasks = [];
@@ -192,8 +156,11 @@ const task = (val) => {
 }
 
 var sections = [];
-const addSectionDiv = document.getElementById("add-section");
-const input = document.getElementById("new-section-name");
+const addSectionDivs = document.getElementsByClassName("add-section");
+
+for (var i = 0;i < addSectionDivs.length;i++) {
+    addSectionEvent(addSectionDivs[i]);
+}
 
 document.addEventListener("click", (event) => {
     var act = document.querySelector(".active");
@@ -219,24 +186,5 @@ document.addEventListener("click", (event) => {
         }
         else drop.style.bottom = "-" + (drop.offsetHeight) + "px";
         drop.style.opacity = "1";
-    }
-});
-
-addSectionDiv.addEventListener("click", () => {input.focus();});
-input.addEventListener("focusin", () => {
-    addSectionDiv.style.opacity = "1";
-    addSectionDiv.style.cursor = "text";
-});
-input.addEventListener("focusout", () => {
-    addSectionDiv.style.opacity = "0.5";
-    addSectionDiv.style.cursor = "pointer";
-});
-input.addEventListener("keydown", (event) => {
-    if (event.code === "Enter" && input.value !== "") {
-        var newSection = section(input.value);
-        sections.push(newSection);
-        addSection();
-        input.value = "";
-        input.blur();
     }
 });
