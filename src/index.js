@@ -42,106 +42,119 @@ function addSection(colNum) {
         img.style.opacity = "0";
     });
     sectionHeader.addEventListener("mousedown", (event) => {
-        if (!sectionHeader.contains(event.target) || sectionHeader === event.target) {
-            document.addEventListener("mousemove", dragMouse);
-            document.addEventListener("mouseup", closeDragMouse);
-            const ogX = event.clientX;
-            const ogY = event.clientY;
-            let xPos = 0;
-            let yPos = 0;
-
-            function dragMouse(event) {
-                newSection.classList.toggle("dragging");
-                event.preventDefault();
-                xPos += event.movementX;
-                yPos += event.movementY;
-                newSection.style.transform = `translate(${xPos}px, ${yPos}px)`;
-            }
-
-            function closeDragMouse(event) {
-                document.removeEventListener("mouseup", closeDragMouse);
-                document.removeEventListener("mousemove", dragMouse);
-                elements = document.elementsFromPoint(event.clientX, event.clientY);
-                console.log(elements);
-                for (var i = 0;i < elements.length;i++) {
-                    var elem = elements[i];
-                    if (elem.className === "section") {
-                        var col = elem.parentElement;
-                        if (event.clientY > ogY) col.insertBefore(newSection, elem.nextSibling);
-                        else col.insertBefore(newSection, elem);
-                        newSection.style.transform = null;
-                        newSection.classList.toggle("dragging");
-                        return;
-                    }
-                    if (elem.className === "add-section") {
-                        var col = elem.parentElement;
-                        col.insertBefore(newSection, elem);
-                        newSection.style.transform = null;
-                        newSection.classList.toggle("dragging");
-                        return;
-                    }
-                }
-                var elements = document.elementsFromPoint(event.clientX, event.clientY - 25);
-                for (var i = 0;i < elements.length;i++) {
-                    var elem = elements[i];
-                    if (elem.className === "section") {
-                        var col = elem.parentElement;
-                        col.insertBefore(newSection, elem.nextSibling);
-                        newSection.style.transform = null;
-                        newSection.classList.toggle("dragging");
-                        return;
-                    }
-                }
-                elements = document.elementsFromPoint(event.clientX, event.clientY + 25);
-                for (var i = 0;i < elements.length;i++) {
-                    var elem = elements[i];
-                    if (elem.className === "section" || elem.className === "add-section") {
-                        var col = elem.parentElement;
-                        col.insertBefore(newSection, elem);
-                        newSection.style.transform = null;
-                        newSection.classList.toggle("dragging");
-                        return;
-                    }
-                }
-                elements = document.elementsFromPoint(event.clientX, event.clientY);
-                for (var i = 0;i < elements.length;i++) {
-                    var elem = elements[i];
-                    if (elem.className === "col" && !elem.contains(newSection)) {
-                        elem.insertBefore(newSection, elem.querySelector(".add-section"));
-                    }
-                }
-                newSection.style.transform = null;
-                newSection.classList.toggle("dragging");
-            }
-        }
+        sectionMoving(event, newSection);
     });
     const addTaskDiv = document.createElement("div");
     addTaskDiv.className = "add-task";
     addTaskDiv.innerHTML = "<img src=\"../images/plus.svg\" width=\"20px\" height=\"20px\">";
-    const taskInput = document.createElement("input");
-    taskInput.placeholder = "Add Task";
-    taskInput.type = "text";
-    taskInput.addEventListener("focusin", (event) => {event.currentTarget.parentElement.style.opacity = "1";});
-    taskInput.addEventListener("focusout", (event) => {event.currentTarget.parentElement.style.opacity = "0.5";});
-    taskInput.addEventListener("keydown", (event) => {
-        if (event.code === "Enter") {    
-            const inp = event.currentTarget;
-            if (inp.value !== "") {
-                const t = task(inp.value);
-                sections[secNumber].tasks.push(t);
-                addTask(t, secNumber);
-                inp.value = "";
-                inp.blur();
+    addTaskDiv.addEventListener("click", () => {
+        const dialog = document.querySelector("#add-task-dialog");
+        dialog.showModal();
+        document.addEventListener("keydown", function taskTemp(event) {
+            if (event.code === "Enter") {
+                verifyTaskAdd(secNumber);
+                document.removeEventListener("keydown", taskTemp);
             }
-        }
+        });
     });
-    addTaskDiv.appendChild(taskInput);
+    const taskText = document.createElement("div");
+    taskText.textContent = "Add Task";
+    taskText.style.fontSize = "14px";
+    addTaskDiv.appendChild(taskText);
     container.appendChild(sectionHeader);
     container.appendChild(addTaskDiv);
     newSection.appendChild(container);
     const col = document.querySelector("[data-col=" + CSS.escape(colNum) + "]");
     const addSec = col.querySelector(".add-section");
     col.insertBefore(newSection, addSec);
+}
+
+function sectionMoving(event, newSection) {
+    sectionHeader = newSection.querySelector(".section-header");
+    if (!sectionHeader.contains(event.target) || sectionHeader === event.target) {
+        document.addEventListener("mousemove", dragMouse);
+        document.addEventListener("mouseup", closeDragMouse);
+        const ogY = event.clientY;
+        let xPos = 0;
+        let yPos = 0;
+
+        function dragMouse(event) {
+            newSection.classList.toggle("dragging");
+            event.preventDefault();
+            xPos += event.movementX;
+            yPos += event.movementY;
+            newSection.style.transform = `translate(${xPos}px, ${yPos}px)`;
+        }
+
+        function closeDragMouse(event) {
+            document.removeEventListener("mouseup", closeDragMouse);
+            document.removeEventListener("mousemove", dragMouse);
+            elements = document.elementsFromPoint(event.clientX, event.clientY);
+            for (var i = 0;i < elements.length;i++) {
+                var elem = elements[i];
+                if (elem.className === "section") {
+                    var col = elem.parentElement;
+                    if (event.clientY > ogY) col.insertBefore(newSection, elem.nextSibling);
+                    else col.insertBefore(newSection, elem);
+                    newSection.style.transform = null;
+                    newSection.classList.toggle("dragging");
+                    return;
+                }
+                if (elem.className === "add-section") {
+                    var col = elem.parentElement;
+                    col.insertBefore(newSection, elem);
+                    newSection.style.transform = null;
+                    newSection.classList.toggle("dragging");
+                    return;
+                }
+            }
+            var elements = document.elementsFromPoint(event.clientX, event.clientY - 25);
+            for (var i = 0;i < elements.length;i++) {
+                var elem = elements[i];
+                if (elem.className === "section") {
+                    var col = elem.parentElement;
+                    col.insertBefore(newSection, elem.nextSibling);
+                    newSection.style.transform = null;
+                    newSection.classList.toggle("dragging");
+                    return;
+                }
+            }
+            elements = document.elementsFromPoint(event.clientX, event.clientY + 25);
+            for (var i = 0;i < elements.length;i++) {
+                var elem = elements[i];
+                if (elem.className === "section" || elem.className === "add-section") {
+                    var col = elem.parentElement;
+                    col.insertBefore(newSection, elem);
+                    newSection.style.transform = null;
+                    newSection.classList.toggle("dragging");
+                    return;
+                }
+            }
+            elements = document.elementsFromPoint(event.clientX, event.clientY);
+            for (var i = 0;i < elements.length;i++) {
+                var elem = elements[i];
+                if (elem.className === "col" && !elem.contains(newSection)) {
+                    elem.insertBefore(newSection, elem.querySelector(".add-section"));
+                }
+            }
+            newSection.style.transform = null;
+            newSection.classList.toggle("dragging");
+        }
+    }
+}
+
+function verifyTaskAdd(secNumber) {
+    const dialog = document.querySelector("#add-task-dialog");
+    const taskName = dialog.querySelector("#task-name");
+    const taskDue = dialog.querySelector("#task-due");
+    const taskDesc = dialog.querySelector("#task-desc");
+    const t = task(taskName.value, taskDue.value, taskDesc.value);
+    taskName.value = null;
+    taskDue.value = null;
+    taskDesc.value = null;
+    sections[secNumber].tasks.push(t);
+    addTask(t, secNumber);
+    dialog.close();
 }
 
 function addTask(task, secNumber) {
@@ -223,20 +236,21 @@ const section = (head) => {
     return {header, tasks, removeTask};
 }
 
-const task = (val) => {
-    let name = val;
-    let dueDate = undefined;
-    let desc = "";
+const task = (n, due, d) => {
+    let name = n;
+    let dueDate = due;
+    let desc = d;
     return {name, dueDate, desc};
 }
 
 var sections = [];
 const addSectionDivs = document.getElementsByClassName("add-section");
+const taskDialog = document.querySelector("#add-task-dialog");
 
 for (var i = 0;i < addSectionDivs.length;i++) {
     addSectionEvent(addSectionDivs[i]);
 }
-document.addEventListener("click", (event) => {console.log(event.clientX + " " + event.clientY)});
+
 document.addEventListener("click", (event) => {
     var act = document.querySelector(".active");
     if (act && act.parentElement !== event.target.parentElement && !act.contains(event.target)) {
