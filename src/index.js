@@ -20,11 +20,12 @@ function addSection(colNum) {
         container.style.opacity = "0";
         rem.style.maxHeight = "0px";
         rem.style.fontSize = "0px";
-        setTimeout(function() {rem.remove();}, 300);
+        setTimeout(function() {rem.remove();}, 400);
     });
     dropDown.appendChild(del);
     dropDownContainer.appendChild(tripleDot);
     dropDownContainer.appendChild(dropDown);
+    dropDownContainer.style.cursor = "pointer";
     const container = document.createElement("div");
     container.className = "section-container";
     container.dataset.sec = sections.length - 1;
@@ -39,6 +40,80 @@ function addSection(colNum) {
     sectionHeader.addEventListener("mouseleave", (event) => {
         const img = event.currentTarget.querySelector("img");
         img.style.opacity = "0";
+    });
+    sectionHeader.addEventListener("mousedown", (event) => {
+        if (!sectionHeader.contains(event.target) || sectionHeader === event.target) {
+            document.addEventListener("mousemove", dragMouse);
+            document.addEventListener("mouseup", closeDragMouse);
+            const ogX = event.clientX;
+            const ogY = event.clientY;
+            let xPos = 0;
+            let yPos = 0;
+
+            function dragMouse(event) {
+                newSection.classList.toggle("dragging");
+                event.preventDefault();
+                xPos += event.movementX;
+                yPos += event.movementY;
+                newSection.style.transform = `translate(${xPos}px, ${yPos}px)`;
+            }
+
+            function closeDragMouse(event) {
+                document.removeEventListener("mouseup", closeDragMouse);
+                document.removeEventListener("mousemove", dragMouse);
+                elements = document.elementsFromPoint(event.clientX, event.clientY);
+                console.log(elements);
+                for (var i = 0;i < elements.length;i++) {
+                    var elem = elements[i];
+                    if (elem.className === "section") {
+                        var col = elem.parentElement;
+                        if (event.clientY > ogY) col.insertBefore(newSection, elem.nextSibling);
+                        else col.insertBefore(newSection, elem);
+                        newSection.style.transform = null;
+                        newSection.classList.toggle("dragging");
+                        return;
+                    }
+                    if (elem.className === "add-section") {
+                        var col = elem.parentElement;
+                        col.insertBefore(newSection, elem);
+                        newSection.style.transform = null;
+                        newSection.classList.toggle("dragging");
+                        return;
+                    }
+                }
+                var elements = document.elementsFromPoint(event.clientX, event.clientY - 25);
+                for (var i = 0;i < elements.length;i++) {
+                    var elem = elements[i];
+                    if (elem.className === "section") {
+                        var col = elem.parentElement;
+                        col.insertBefore(newSection, elem.nextSibling);
+                        newSection.style.transform = null;
+                        newSection.classList.toggle("dragging");
+                        return;
+                    }
+                }
+                elements = document.elementsFromPoint(event.clientX, event.clientY + 25);
+                for (var i = 0;i < elements.length;i++) {
+                    var elem = elements[i];
+                    if (elem.className === "section" || elem.className === "add-section") {
+                        var col = elem.parentElement;
+                        col.insertBefore(newSection, elem);
+                        newSection.style.transform = null;
+                        newSection.classList.toggle("dragging");
+                        return;
+                    }
+                }
+                elements = document.elementsFromPoint(event.clientX, event.clientY);
+                for (var i = 0;i < elements.length;i++) {
+                    var elem = elements[i];
+                    if (elem.className === "col" && !elem.contains(newSection)) {
+                        elem.insertBefore(newSection, elem.querySelector(".add-section"));
+                    }
+                }
+                newSection.style.transform = null;
+                newSection.classList.toggle("dragging");
+            }
+        }
     });
     const addTaskDiv = document.createElement("div");
     addTaskDiv.className = "add-task";
@@ -92,7 +167,7 @@ function addTask(task, secNumber) {
     taskDropDown.dataset.sec = secNumber;
     taskDropDown.dataset.task = taskNumber;
     taskDel.addEventListener("click", () => {
-        sections[secNum].removeTask(task);
+        sections[secNumber].removeTask(task);
         var rem = document.querySelector("[data-sec=" + CSS.escape(secNumber) + "][data-task=" + CSS.escape(taskNumber) + "]");
         var drop = rem.children[0];
         drop.style.display = "none";
@@ -161,7 +236,7 @@ const addSectionDivs = document.getElementsByClassName("add-section");
 for (var i = 0;i < addSectionDivs.length;i++) {
     addSectionEvent(addSectionDivs[i]);
 }
-
+document.addEventListener("click", (event) => {console.log(event.clientX + " " + event.clientY)});
 document.addEventListener("click", (event) => {
     var act = document.querySelector(".active");
     if (act && act.parentElement !== event.target.parentElement && !act.contains(event.target)) {
