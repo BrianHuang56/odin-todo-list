@@ -143,3 +143,6 @@ body {
     left:calc(100% - 10px - 0.75rem);
 }
 .triple-dot {margin-bottom:-3px;}
+#add-task-dialog {
+    border:none;
+}

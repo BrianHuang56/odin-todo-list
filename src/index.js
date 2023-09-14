@@ -13,15 +13,7 @@ function addSection(colNum) {
     dropDown.dataset.sec = secNumber;
     const del = document.createElement("div");
     del.textContent = "Delete";
-    del.addEventListener("click", () => {
-        sections.splice(secNumber, 1);
-        const rem = document.querySelector("[data-sec=" + CSS.escape(secNumber) + "]");
-        const container = rem.querySelector(".section-container");
-        container.style.opacity = "0";
-        rem.style.maxHeight = "0px";
-        rem.style.fontSize = "0px";
-        setTimeout(function() {rem.remove();}, 400);
-    });
+    del.addEventListener("click", () => {removeSection(secNumber);});
     dropDown.appendChild(del);
     dropDownContainer.appendChild(tripleDot);
     dropDownContainer.appendChild(dropDown);
@@ -41,22 +33,11 @@ function addSection(colNum) {
         const img = event.currentTarget.querySelector("img");
         img.style.opacity = "0";
     });
-    sectionHeader.addEventListener("mousedown", (event) => {
-        sectionMoving(event, newSection);
-    });
+    sectionHeader.addEventListener("mousedown", (event) => {sectionMoving(event, newSection);});
     const addTaskDiv = document.createElement("div");
     addTaskDiv.className = "add-task";
     addTaskDiv.innerHTML = "<img src=\"../images/plus.svg\" width=\"20px\" height=\"20px\">";
-    addTaskDiv.addEventListener("click", () => {
-        const dialog = document.querySelector("#add-task-dialog");
-        dialog.showModal();
-        document.addEventListener("keydown", function taskTemp(event) {
-            if (event.code === "Enter") {
-                verifyTaskAdd(secNumber);
-                document.removeEventListener("keydown", taskTemp);
-            }
-        });
-    });
+    addTaskDiv.addEventListener("click", () => {verifyTaskAdd(secNumber);});
     const taskText = document.createElement("div");
     taskText.textContent = "Add Task";
     taskText.style.fontSize = "14px";
@@ -69,6 +50,31 @@ function addSection(colNum) {
     col.insertBefore(newSection, addSec);
 }
 
+function verifyTaskAdd(secNumber) {
+    const dialog = document.querySelector("#add-task-dialog");
+    dialog.showModal();
+    document.addEventListener("keydown", function taskTemp(event) {
+        if (event.code === "Enter") {
+            const taskName = dialog.querySelector("#task-name");
+            const taskDue = dialog.querySelector("#task-due");
+            const taskDesc = dialog.querySelector("#task-desc");
+            if (!taskName.value) return;
+            const t = task(taskName.value, taskDue.value, taskDesc.value);
+            taskName.value = null;
+            taskDue.value = null;
+            taskDesc.value = null;
+            sections[secNumber].tasks.push(t);
+            addTask(t, secNumber);
+            dialog.close();
+            document.removeEventListener("keydown", taskTemp);
+        }
+    });
+    document.addEventListener("click", (event) => {
+        if (!dialog.contains(event.target)) dialog.close();
+    })
+}
+
+//Not very happy with how this currently works, will return to
 function sectionMoving(event, newSection) {
     sectionHeader = newSection.querySelector(".section-header");
     if (!sectionHeader.contains(event.target) || sectionHeader === event.target) {
@@ -143,20 +149,6 @@ function sectionMoving(event, newSection) {
     }
 }
 
-function verifyTaskAdd(secNumber) {
-    const dialog = document.querySelector("#add-task-dialog");
-    const taskName = dialog.querySelector("#task-name");
-    const taskDue = dialog.querySelector("#task-due");
-    const taskDesc = dialog.querySelector("#task-desc");
-    const t = task(taskName.value, taskDue.value, taskDesc.value);
-    taskName.value = null;
-    taskDue.value = null;
-    taskDesc.value = null;
-    sections[secNumber].tasks.push(t);
-    addTask(t, secNumber);
-    dialog.close();
-}
-
 function addTask(task, secNumber) {
     const taskNumber = sections[secNumber].tasks.length - 1;
     const t = document.createElement("div");
@@ -179,17 +171,7 @@ function addTask(task, secNumber) {
     taskDel.textContent = "Delete";
     taskDropDown.dataset.sec = secNumber;
     taskDropDown.dataset.task = taskNumber;
-    taskDel.addEventListener("click", () => {
-        sections[secNumber].removeTask(task);
-        var rem = document.querySelector("[data-sec=" + CSS.escape(secNumber) + "][data-task=" + CSS.escape(taskNumber) + "]");
-        var drop = rem.children[0];
-        drop.style.display = "none";
-        rem.style.maxHeight = "0px";
-        rem.style.opacity = "0";
-        rem.style.fontSize = "0";
-        rem.style.padding = "0";
-        setTimeout(function() {rem.remove();}, 300);
-    });
+    taskDel.addEventListener("click", () => {removeTask(task, secNumber);});
     const tripleDot = document.createElement("img");
     tripleDot.src = "../images/dots-vertical.svg";
     tripleDot.style.width = "20px";
@@ -201,6 +183,28 @@ function addTask(task, secNumber) {
     const container = document.querySelector("[data-sec=" + CSS.escape(secNumber) + "] .section-container");
     const addTaskDiv = container.querySelector(".add-task");
     container.insertBefore(t, addTaskDiv);
+}
+
+function removeSection(secNumber) {
+    sections.splice(secNumber, 1);
+    const rem = document.querySelector("[data-sec=" + CSS.escape(secNumber) + "]");
+    const container = rem.querySelector(".section-container");
+    container.style.opacity = "0";
+    rem.style.maxHeight = "0px";
+    rem.style.fontSize = "0px";
+    setTimeout(function() {rem.remove();}, 400);
+}
+
+function removeTask(task, secNumber) {
+    sections[secNumber].removeTask(task);
+    const rem = document.querySelector("[data-sec=" + CSS.escape(secNumber) + "][data-task=" + CSS.escape(taskNumber) + "]");
+    const drop = rem.children[0];
+    drop.style.display = "none";
+    rem.style.maxHeight = "0px";
+    rem.style.opacity = "0";
+    rem.style.fontSize = "0";
+    rem.style.padding = "0";
+    setTimeout(function() {rem.remove();}, 300);
 }
 
 function convertRemToPixels(rem) {    
@@ -229,6 +233,36 @@ function addSectionEvent(div) {
     });
 }
 
+function hideMenus(event) {
+    var act = document.querySelector(".active");
+    if (act && act.parentElement !== event.target.parentElement && !act.contains(event.target)) {
+        act.classList.remove("active");
+        act.style.opacity = "0";
+        if (act.parentElement.parentElement.classList.contains("task")) {
+            act.style.bottom = "-" + (act.offsetHeight - convertRemToPixels(0.5) - 15) + "px";
+        }
+        else act.style.bottom = "-" + (act.offsetHeight - 15) + "px";
+        setTimeout(function() {act.style.visibility = "hidden";}, 300);
+    }
+}
+
+function showMenus(event) {
+    if (event.target.classList.contains("triple-dot")) {
+        var drop = event.target.parentElement.querySelector(".drop-down");
+        drop.classList.add("active");
+        if (drop.parentElement.parentElement.classList.contains("task")) {
+            drop.style.bottom = "-" + (drop.offsetHeight - convertRemToPixels(0.5) - 15) + "px";
+        }
+        else drop.style.bottom = "-" + (drop.offsetHeight - 15) + "px";
+        drop.style.visibility = "visible";
+        if (drop.parentElement.parentElement.classList.contains("task")) {
+            drop.style.bottom = "-" + (drop.offsetHeight - convertRemToPixels(0.5)) + "px";
+        }
+        else drop.style.bottom = "-" + (drop.offsetHeight) + "px";
+        drop.style.opacity = "1";
+    }
+}
+
 const section = (head) => {
     let header = head;
     let tasks = [];
@@ -252,28 +286,6 @@ for (var i = 0;i < addSectionDivs.length;i++) {
 }
 
 document.addEventListener("click", (event) => {
-    var act = document.querySelector(".active");
-    if (act && act.parentElement !== event.target.parentElement && !act.contains(event.target)) {
-        act.classList.remove("active");
-        act.style.opacity = "0";
-        if (act.parentElement.parentElement.classList.contains("task")) {
-            act.style.bottom = "-" + (act.offsetHeight - convertRemToPixels(0.5) - 15) + "px";
-        }
-        else act.style.bottom = "-" + (act.offsetHeight - 15) + "px";
-        setTimeout(function() {act.style.visibility = "hidden";}, 300);
-    }
-    if (event.target.classList.contains("triple-dot")) {
-        var drop = event.target.parentElement.querySelector(".drop-down");
-        drop.classList.add("active");
-        if (drop.parentElement.parentElement.classList.contains("task")) {
-            drop.style.bottom = "-" + (drop.offsetHeight - convertRemToPixels(0.5) - 15) + "px";
-        }
-        else drop.style.bottom = "-" + (drop.offsetHeight - 15) + "px";
-        drop.style.visibility = "visible";
-        if (drop.parentElement.parentElement.classList.contains("task")) {
-            drop.style.bottom = "-" + (drop.offsetHeight - convertRemToPixels(0.5)) + "px";
-        }
-        else drop.style.bottom = "-" + (drop.offsetHeight) + "px";
-        drop.style.opacity = "1";
-    }
+    hideMenus(event);
+    showMenus(event);
 });
