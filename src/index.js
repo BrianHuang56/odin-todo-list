@@ -52,7 +52,7 @@ function addSection(colNum) {
 
 function verifyTaskAdd(secNumber) {
     const dialog = document.querySelector("#task-dialog");
-    dialog.querySelector(".dialog-header").textContent = "Add Task";
+    dialog.querySelector(".dialog-header").childNodes[0].nodeValue = "Add Task";
     const button = dialog.querySelector("#task-submit")
     button.textContent = "Add Task";
     dialog.showModal();
@@ -193,7 +193,7 @@ function addTask(task, secNumber) {
 
 function editTask(secNumber, taskNumber) {
     const dialog = document.querySelector("#task-dialog");
-    dialog.querySelector(".dialog-header").textContent = "Edit Task";
+    dialog.querySelector(".dialog-header").childNodes[0].nodeValue = "Edit Task";
     const button = dialog.querySelector("#task-submit")
     button.textContent = "Edit Task";
     const t = sections[secNumber].tasks[taskNumber];
