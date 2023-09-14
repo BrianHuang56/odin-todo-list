@@ -2,12 +2,12 @@
 <html lang="en">
     <head>
         <meta charset="utf-8">
-        <title>To-do List</title>
+        <title>To-do List Project</title>
         <link rel="stylesheet" href="index.css">
     </head>
     <body>
         <div id="header">
-            <span id="header-text">To-Do List</span>
+            <span id="header-text">Task Manager</span>
         </div>
         <div id="content">
             <div class="col" data-col="0">
@@ -28,19 +28,34 @@
                     <input type="text" class="new-section-input" id="new-section-name-2" placeholder="Add Section">
                 </div>
             </div>
-            <dialog id="add-task-dialog">
-                <label for="task-name">Name</label>
-                <input type="text" id="task-name">
-                <label for="task-due">Due Date</label>
-                <input type="date" id="task-due">
-                <label for="task-desc">Description</label>
-                <input type="text" id="task-desc">
-            </dialog>
-            <dialog id="task-expand">
-
+            <dialog id="task-dialog">
+                <form method="post" autocomplete="off">
+                    <div class="dialog-box">
+                        <div class="dialog-header">
+                            <button value="cancel" id="task-cancel" formmethod="dialog">
+                                <img src="../images/window-close.svg" width="20px">
+                            </button>
+                        </div>
+                        <div class="dialog-inputs">
+                            <label for="task-name">Name</label>
+                            <input type="text" id="task-name" required>
+                            <label for="task-due">Due Date</label>
+                            <input type="date" id="task-due">
+                            <label for="task-desc">Description</label>
+                            <textarea type="text" id="task-desc" rows="4" cols="32"></textarea>
+                        </div>
+                        <div class="dialog-buttons">
+                            <button type="submit" id="task-submit"></button>
+                        </div>
+                    </div>
+                </form>
             </dialog>
             <dialog id="confirmation-dialog">
-                
+                Are you sure you want to?
+                <div id="confirm-buttons">
+                    <button id="confirm-cancel">No</button>
+                    <button id="confirm-submit">Yes</button>
+                </div>
             </dialog>
         </div>
         <script src="main.js"></script>

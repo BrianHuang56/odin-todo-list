@@ -51,27 +51,30 @@ function addSection(colNum) {
 }
 
 function verifyTaskAdd(secNumber) {
-    const dialog = document.querySelector("#add-task-dialog");
+    const dialog = document.querySelector("#task-dialog");
+    dialog.querySelector(".dialog-header").textContent = "Add Task";
+    const button = dialog.querySelector("#task-submit")
+    button.textContent = "Add Task";
     dialog.showModal();
-    document.addEventListener("keydown", function taskTemp(event) {
-        if (event.code === "Enter") {
-            const taskName = dialog.querySelector("#task-name");
-            const taskDue = dialog.querySelector("#task-due");
-            const taskDesc = dialog.querySelector("#task-desc");
-            if (!taskName.value) return;
-            const t = task(taskName.value, taskDue.value, taskDesc.value);
-            taskName.value = null;
-            taskDue.value = null;
-            taskDesc.value = null;
-            sections[secNumber].tasks.push(t);
-            addTask(t, secNumber);
-            dialog.close();
-            document.removeEventListener("keydown", taskTemp);
+    button.addEventListener("click", function taskTemp(event) {
+        const taskName = dialog.querySelector("#task-name");
+        const taskDue = dialog.querySelector("#task-due");
+        const taskDesc = dialog.querySelector("#task-desc");
+        if (taskName.validity.valueMissing) {
+            taskName.setCustomValidity("Please fill out this field");
+            taskName.addEventListener("input", function() {taskName.setCustomValidity("");});
+            return;
         }
+        const t = task(taskName.value, taskDue.value, taskDesc.value);
+        taskName.value = null;
+        taskDue.value = null;
+        taskDesc.value = null;
+        sections[secNumber].tasks.push(t);
+        addTask(t, secNumber);
+        dialog.close();
+        button.removeEventListener("click", taskTemp);
+        event.preventDefault();
     });
-    document.addEventListener("click", (event) => {
-        if (!dialog.contains(event.target)) dialog.close();
-    })
 }
 
 //Not very happy with how this currently works, will return to
@@ -164,6 +167,9 @@ function addTask(task, secNumber) {
         var img = event.currentTarget.querySelector("img");
         img.style.opacity = "0";
     });
+    t.addEventListener("click", (event) => {
+        if (event.target === event.currentTarget) editTask(secNumber, taskNumber);
+    });
     const taskDropDownContainer = document.createElement("div");
     const taskDropDown = document.createElement("div");
     taskDropDown.className = "drop-down";
@@ -171,7 +177,7 @@ function addTask(task, secNumber) {
     taskDel.textContent = "Delete";
     taskDropDown.dataset.sec = secNumber;
     taskDropDown.dataset.task = taskNumber;
-    taskDel.addEventListener("click", () => {removeTask(task, secNumber);});
+    taskDel.addEventListener("click", () => {removeTask(task, secNumber, taskNumber);});
     const tripleDot = document.createElement("img");
     tripleDot.src = "../images/dots-vertical.svg";
     tripleDot.style.width = "20px";
@@ -185,26 +191,70 @@ function addTask(task, secNumber) {
     container.insertBefore(t, addTaskDiv);
 }
 
-function removeSection(secNumber) {
-    sections.splice(secNumber, 1);
-    const rem = document.querySelector("[data-sec=" + CSS.escape(secNumber) + "]");
-    const container = rem.querySelector(".section-container");
-    container.style.opacity = "0";
-    rem.style.maxHeight = "0px";
-    rem.style.fontSize = "0px";
-    setTimeout(function() {rem.remove();}, 400);
+function editTask(secNumber, taskNumber) {
+    const dialog = document.querySelector("#task-dialog");
+    dialog.querySelector(".dialog-header").textContent = "Edit Task";
+    const button = dialog.querySelector("#task-submit")
+    button.textContent = "Edit Task";
+    const t = sections[secNumber].tasks[taskNumber];
+    const taskName = dialog.querySelector("#task-name");
+    const taskDue = dialog.querySelector("#task-due");
+    const taskDesc = dialog.querySelector("#task-desc");
+    taskName.value = t.name;
+    taskDue.value = t.dueDate;
+    taskDesc.value = t.desc;
+    dialog.showModal();
+    button.addEventListener("click", function eTask(event) {
+        if (taskName.validity.valueMissing) {
+            taskName.setCustomValidity("Please fill out this field");
+            taskName.addEventListener("input", function() {taskName.setCustomValidity("");});
+            return;
+        }
+        const newT = task(taskName.value, taskDue.value, taskDesc.value);
+        sections[secNumber].tasks[taskNumber] = newT;
+        const edit = document.querySelector("[data-sec=" + CSS.escape(secNumber) + "][data-task=" + CSS.escape(taskNumber) + "]").childNodes[0];
+        edit.nodeValue = sections[secNumber].tasks[taskNumber].name;
+        button.removeEventListener("click", eTask);
+        dialog.close();
+        event.preventDefault();
+    });
 }
 
-function removeTask(task, secNumber) {
-    sections[secNumber].removeTask(task);
-    const rem = document.querySelector("[data-sec=" + CSS.escape(secNumber) + "][data-task=" + CSS.escape(taskNumber) + "]");
-    const drop = rem.children[0];
-    drop.style.display = "none";
-    rem.style.maxHeight = "0px";
-    rem.style.opacity = "0";
-    rem.style.fontSize = "0";
-    rem.style.padding = "0";
-    setTimeout(function() {rem.remove();}, 300);
+
+function removeSection(secNumber) {
+    const confirmDialog = document.querySelector("#confirmation-dialog");
+    confirmDialog.showModal();
+    const submit = confirmDialog.querySelector("#confirm-submit");
+    submit.addEventListener("click", () => {
+        confirmDialog.close();
+        setTimeout(() => {}, 150);
+        sections.splice(secNumber, 1);
+        const rem = document.querySelector("[data-sec=" + CSS.escape(secNumber) + "]");
+        const container = rem.querySelector(".section-container");
+        container.style.opacity = "0";
+        rem.style.maxHeight = "0px";
+        rem.style.fontSize = "0px";
+        setTimeout(function() {rem.remove();}, 400);
+    })
+}
+
+function removeTask(task, secNumber, taskNumber) {
+    const confirmDialog = document.querySelector("#confirmation-dialog");
+    confirmDialog.showModal();
+    const submit = confirmDialog.querySelector("#confirm-submit");
+    submit.addEventListener("click", () => {
+        confirmDialog.close();
+        setTimeout(() => {}, 150);
+        sections[secNumber].removeTask(task);
+        const rem = document.querySelector("[data-sec=" + CSS.escape(secNumber) + "][data-task=" + CSS.escape(taskNumber) + "]");
+        const drop = rem.children[0];
+        drop.style.display = "none";
+        rem.style.maxHeight = "0px";
+        rem.style.opacity = "0";
+        rem.style.fontSize = "0";
+        rem.style.padding = "0";
+        setTimeout(function() {rem.remove();}, 300);
+    });
 }
 
 function convertRemToPixels(rem) {    
@@ -279,7 +329,28 @@ const task = (n, due, d) => {
 
 var sections = [];
 const addSectionDivs = document.getElementsByClassName("add-section");
-const taskDialog = document.querySelector("#add-task-dialog");
+const taskDialog = document.querySelector("#task-dialog");
+const dialogBox = taskDialog.querySelector(".dialog-box");
+const confirmDialog = document.querySelector("#confirmation-dialog");
+
+document.addEventListener("mousedown", function clickClose(event) {
+    if (!dialogBox.contains(event.target)) {
+        taskDialog.close();
+    }
+});
+
+confirmDialog.querySelector("#confirm-cancel").addEventListener("click", () => {
+    confirmDialog.close();
+});
+
+dialogBox.querySelector("#task-cancel").addEventListener("click", (event) => {
+    event.preventDefault();
+    const inp = taskDialog.querySelectorAll("input, textarea");
+    for (var i = 0;i < inp.length;i++) {
+        inp[i].value = null;
+    }
+    taskDialog.close();
+});
 
 for (var i = 0;i < addSectionDivs.length;i++) {
     addSectionEvent(addSectionDivs[i]);
