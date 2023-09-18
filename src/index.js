@@ -10,17 +10,15 @@ function addSection(colNum) {
     tripleDot.className = "triple-dot";
     const dropDown = document.createElement("div");
     dropDown.className = "drop-down";
-    dropDown.dataset.sec = secNumber;
     const del = document.createElement("div");
     del.textContent = "Delete";
-    del.addEventListener("click", () => {removeSection(secNumber);});
+    del.addEventListener("click", () => {removeSection(newSection.dataset.sec);});
     dropDown.appendChild(del);
     dropDownContainer.appendChild(tripleDot);
     dropDownContainer.appendChild(dropDown);
     dropDownContainer.style.cursor = "pointer";
     const container = document.createElement("div");
     container.className = "section-container";
-    container.dataset.sec = sections.length - 1;
     const sectionHeader = document.createElement("div");
     sectionHeader.textContent = sections[secNumber].header;
     sectionHeader.className = "section-header";
@@ -77,13 +75,15 @@ function verifyTaskAdd(secNumber) {
     });
 }
 
-//Not very happy with how this currently works, will return to
 function sectionMoving(event, newSection) {
     sectionHeader = newSection.querySelector(".section-header");
     if (!sectionHeader.contains(event.target) || sectionHeader === event.target) {
         document.addEventListener("mousemove", dragMouse);
         document.addEventListener("mouseup", closeDragMouse);
-        const ogY = event.clientY;
+        const ogX = event.clientX;
+        const rect = sectionHeader.getBoundingClientRect();
+        const mid = rect.left + (rect.width / 2);
+        const offSet = mid - ogX;
         let xPos = 0;
         let yPos = 0;
 
@@ -98,56 +98,31 @@ function sectionMoving(event, newSection) {
         function closeDragMouse(event) {
             document.removeEventListener("mouseup", closeDragMouse);
             document.removeEventListener("mousemove", dragMouse);
-            elements = document.elementsFromPoint(event.clientX, event.clientY);
-            for (var i = 0;i < elements.length;i++) {
-                var elem = elements[i];
-                if (elem.className === "section") {
-                    var col = elem.parentElement;
-                    if (event.clientY > ogY) col.insertBefore(newSection, elem.nextSibling);
-                    else col.insertBefore(newSection, elem);
+            const currX = event.clientX + offSet;
+            const currY = event.clientY;
+            const cols = document.querySelectorAll("[data-col]");
+            const colZero = cols[0].getBoundingClientRect();
+            const colOne = cols[1].getBoundingClientRect();
+            const colTwo = cols[2].getBoundingClientRect();
+            var col;
+            if (currX > colZero.left && currX < colZero.left + colZero.width) col = cols[0];
+            else if (currX > colOne.left && currX < colOne.left + colOne.width) col = cols[1];
+            else if (currX > colTwo.left && currX < colTwo.left + colTwo.width) col = cols[2];
+            if (col === undefined) return;
+            const children = col.children;
+            console.log(currY);
+            for (var i = 0;i < children.length;i++) {
+                var child = children[i].getBoundingClientRect();
+                console.log(child.y);
+                if (child.y >= currY) {
+                    col.insertBefore(newSection, children[i]);
                     newSection.style.transform = null;
-                    newSection.classList.toggle("dragging");
-                    return;
-                }
-                if (elem.className === "add-section") {
-                    var col = elem.parentElement;
-                    col.insertBefore(newSection, elem);
-                    newSection.style.transform = null;
-                    newSection.classList.toggle("dragging");
-                    return;
-                }
-            }
-            var elements = document.elementsFromPoint(event.clientX, event.clientY - 25);
-            for (var i = 0;i < elements.length;i++) {
-                var elem = elements[i];
-                if (elem.className === "section") {
-                    var col = elem.parentElement;
-                    col.insertBefore(newSection, elem.nextSibling);
-                    newSection.style.transform = null;
-                    newSection.classList.toggle("dragging");
                     return;
                 }
             }
-            elements = document.elementsFromPoint(event.clientX, event.clientY + 25);
-            for (var i = 0;i < elements.length;i++) {
-                var elem = elements[i];
-                if (elem.className === "section" || elem.className === "add-section") {
-                    var col = elem.parentElement;
-                    col.insertBefore(newSection, elem);
-                    newSection.style.transform = null;
-                    newSection.classList.toggle("dragging");
-                    return;
-                }
-            }
-            elements = document.elementsFromPoint(event.clientX, event.clientY);
-            for (var i = 0;i < elements.length;i++) {
-                var elem = elements[i];
-                if (elem.className === "col" && !elem.contains(newSection)) {
-                    elem.insertBefore(newSection, elem.querySelector(".add-section"));
-                }
-            }
+            const addSectionDiv = col.querySelector(".add-section");
+            col.insertBefore(newSection, addSectionDiv);
             newSection.style.transform = null;
-            newSection.classList.toggle("dragging");
         }
     }
 }
@@ -157,7 +132,6 @@ function addTask(task, secNumber) {
     const t = document.createElement("div");
     t.className = "task";
     t.textContent = task.name;
-    t.dataset.sec = secNumber;
     t.dataset.task = taskNumber;
     t.addEventListener("mouseenter", (event) => {
         var img = event.currentTarget.querySelector("img");
@@ -175,9 +149,8 @@ function addTask(task, secNumber) {
     taskDropDown.className = "drop-down";
     const taskDel = document.createElement("div");
     taskDel.textContent = "Delete";
-    taskDropDown.dataset.sec = secNumber;
     taskDropDown.dataset.task = taskNumber;
-    taskDel.addEventListener("click", () => {removeTask(task, secNumber, taskNumber);});
+    taskDel.addEventListener("click", () => {removeTask(secNumber, t.dataset.task);});
     const tripleDot = document.createElement("img");
     tripleDot.src = "../images/dots-vertical.svg";
     tripleDot.style.width = "20px";
@@ -212,7 +185,7 @@ function editTask(secNumber, taskNumber) {
         }
         const newT = task(taskName.value, taskDue.value, taskDesc.value);
         sections[secNumber].tasks[taskNumber] = newT;
-        const edit = document.querySelector("[data-sec=" + CSS.escape(secNumber) + "][data-task=" + CSS.escape(taskNumber) + "]").childNodes[0];
+        const edit = document.querySelector("[data-sec=" + CSS.escape(secNumber) + "] > .section-container > [data-task=" + CSS.escape(taskNumber) + "]").childNodes[0];
         edit.nodeValue = sections[secNumber].tasks[taskNumber].name;
         button.removeEventListener("click", eTask);
         dialog.close();
@@ -225,7 +198,7 @@ function removeSection(secNumber) {
     const confirmDialog = document.querySelector("#confirmation-dialog");
     confirmDialog.showModal();
     const submit = confirmDialog.querySelector("#confirm-submit");
-    submit.addEventListener("click", () => {
+    submit.addEventListener("click", function remSec() {
         confirmDialog.close();
         setTimeout(() => {}, 150);
         sections.splice(secNumber, 1);
@@ -234,27 +207,52 @@ function removeSection(secNumber) {
         container.style.opacity = "0";
         rem.style.maxHeight = "0px";
         rem.style.fontSize = "0px";
+        updateSections(secNumber);
         setTimeout(function() {rem.remove();}, 400);
-    })
+        submit.removeEventListener("click", remSec);
+    });
 }
 
-function removeTask(task, secNumber, taskNumber) {
+function updateSections(secNumber) {
+    const sections = document.querySelectorAll("[data-sec]");
+    for (var i = 0;i < sections.length;i++) {
+        var s = sections[i];
+        if (s.dataset.sec > secNumber) {
+            s.dataset.sec -= 1;
+        }
+    }
+}
+
+function removeTask(secNumber, taskNumber) {
     const confirmDialog = document.querySelector("#confirmation-dialog");
     confirmDialog.showModal();
     const submit = confirmDialog.querySelector("#confirm-submit");
-    submit.addEventListener("click", () => {
+    submit.addEventListener("click", function remTask() {
         confirmDialog.close();
         setTimeout(() => {}, 150);
-        sections[secNumber].removeTask(task);
-        const rem = document.querySelector("[data-sec=" + CSS.escape(secNumber) + "][data-task=" + CSS.escape(taskNumber) + "]");
+        sections[secNumber].tasks.splice(taskNumber, 1);
+        const rem = document.querySelector("[data-sec=" + CSS.escape(secNumber) + "] > .section-container > [data-task=" + CSS.escape(taskNumber) + "]");
         const drop = rem.children[0];
         drop.style.display = "none";
         rem.style.maxHeight = "0px";
         rem.style.opacity = "0";
         rem.style.fontSize = "0";
         rem.style.padding = "0";
+        updateTasks(secNumber, taskNumber);
         setTimeout(function() {rem.remove();}, 300);
+        submit.removeEventListener("click", remTask);
     });
+}
+
+function updateTasks(secNumber, taskNumber) {
+    const section = document.querySelector("[data-sec=" + CSS.escape(secNumber) + "]");
+    const tasks = section.querySelectorAll("[data-task]");
+    for (var i = 0;i < tasks.length;i++) {
+        var t = tasks[i];
+        if (t.dataset.task > taskNumber) {  
+            t.dataset.task -= 1;
+        }
+    }
 }
 
 function convertRemToPixels(rem) {    
@@ -276,7 +274,7 @@ function addSectionEvent(div) {
         if (event.code === "Enter" && input.value !== "") {
             var newSection = section(input.value);
             sections.push(newSection);
-            addSection(event.currentTarget.parentElement.dataset.col);
+            addSection(event.currentTarget.parentElement.parentElement.dataset.col);
             input.value = "";
             input.blur();
         }
@@ -316,8 +314,7 @@ function showMenus(event) {
 const section = (head) => {
     let header = head;
     let tasks = [];
-    const removeTask = (ind) => {tasks.splice(ind, 1);};
-    return {header, tasks, removeTask};
+    return {header, tasks};
 }
 
 const task = (n, due, d) => {
@@ -334,6 +331,7 @@ const dialogBox = taskDialog.querySelector(".dialog-box");
 const confirmDialog = document.querySelector("#confirmation-dialog");
 
 document.addEventListener("mousedown", function clickClose(event) {
+    console.log(event.clientY);
     if (!dialogBox.contains(event.target)) {
         taskDialog.close();
     }
