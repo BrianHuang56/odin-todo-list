@@ -88,14 +88,35 @@ function sectionMoving(event, newSection) {
         let yPos = 0;
 
         function dragMouse(event) {
+            var VerticalMaxed = function(){ return (window.innerHeight + window.scrollY) >= document.body.offsetHeight}
+
+            var scroll = function (stepY) {
+                var scrollY = document.documentElement.scrollTop || document.body.scrollTop;
+                var scrollX = document.documentElement.scrollLeft || document.body.scrollLeft;
+                if (!stopY) window.scrollTo((scrollX), (scrollY + stepY));
+            }
+
             newSection.classList.toggle("dragging");
             event.preventDefault();
             xPos += event.movementX;
             yPos += event.movementY;
+            var stopY = true;
+            if (event.clientY < 150) {
+                stopY = false;
+                scroll(-1);
+                yPos += 1;
+            }
+    
+            if ((event.clientY > (document.documentElement.clientHeight - 150)) && !VerticalMaxed()) { 
+                stopY = false;
+                scroll(1);
+                yPos -= 1;
+            }
             newSection.style.transform = `translate(${xPos}px, ${yPos}px)`;
         }
 
         function closeDragMouse(event) {
+            stopY = true;
             document.removeEventListener("mouseup", closeDragMouse);
             document.removeEventListener("mousemove", dragMouse);
             const currX = event.clientX + offSet;
@@ -110,7 +131,6 @@ function sectionMoving(event, newSection) {
             else if (currX > colTwo.left && currX < colTwo.left + colTwo.width) col = cols[2];
             if (col === undefined) return;
             const children = col.children;
-            console.log(currY);
             for (var i = 0;i < children.length;i++) {
                 var child = children[i].getBoundingClientRect();
                 console.log(child.y);
@@ -331,7 +351,6 @@ const dialogBox = taskDialog.querySelector(".dialog-box");
 const confirmDialog = document.querySelector("#confirmation-dialog");
 
 document.addEventListener("mousedown", function clickClose(event) {
-    console.log(event.clientY);
     if (!dialogBox.contains(event.target)) {
         taskDialog.close();
     }
