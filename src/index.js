@@ -82,45 +82,72 @@ function sectionMoving(event, newSection) {
         document.addEventListener("mouseup", closeDragMouse);
         const ogX = event.clientX;
         const rect = sectionHeader.getBoundingClientRect();
+        const width = newSection.offsetWidth;
+        newSection.classList.toggle("dragging");
+        newSection.style.position = "absolute";
+        newSection.style.width = width + "px";
         const mid = rect.left + (rect.width / 2);
         const offSet = mid - ogX;
         let xPos = 0;
         let yPos = 0;
+        let md = -1;
 
         function dragMouse(event) {
-            var VerticalMaxed = function(){ return (window.innerHeight + window.scrollY) >= document.body.offsetHeight}
+            if (md !== -1) {
+                clearInterval(md);
+                md = -1;
+            }
+            event.preventDefault();
 
             var scroll = function (stepY) {
                 var scrollY = document.documentElement.scrollTop || document.body.scrollTop;
                 var scrollX = document.documentElement.scrollLeft || document.body.scrollLeft;
-                if (!stopY) window.scrollTo((scrollX), (scrollY + stepY));
+                const html = document.documentElement;
+                if (scrollY === 0 && stepY < 0) {
+                    clearInterval(md);
+                    md = -1;
+                    return;
+                }
+                if (Math.abs(html.scrollHeight - html.scrollTop - html.clientHeight) <= 1  && stepY > 0) {
+                    clearInterval(md);
+                    md = -1;
+                    return;
+                }
+                window.scrollTo((scrollX), (scrollY + stepY));
+                yPos += stepY;
+                newSection.style.transform = `translate(${xPos}px, ${(yPos)}px)`;
             }
 
-            newSection.classList.toggle("dragging");
-            event.preventDefault();
             xPos += event.movementX;
-            yPos += event.movementY;
-            var stopY = true;
-            if (event.clientY < 150) {
-                stopY = false;
-                scroll(-1);
-                yPos += 1;
+            newSection.style.transform = `translate(${xPos}px, ${yPos}px)`;
+
+            if (event.clientY < 75) {
+                md = setInterval(function() {
+                    scroll(-4);
+                }, 10);
             }
     
-            if ((event.clientY > (document.documentElement.clientHeight - 150)) && !VerticalMaxed()) { 
-                stopY = false;
-                scroll(1);
-                yPos -= 1;
+            else if (event.clientY > (document.documentElement.clientHeight - newSection.clientHeight)) { 
+                md = setInterval(function() {
+                    scroll(4);
+                }, 10);
             }
-            newSection.style.transform = `translate(${xPos}px, ${yPos}px)`;
+            else {
+                yPos += event.movementY;
+                newSection.style.transform = `translate(${xPos}px, ${yPos}px)`;
+            }
         }
 
         function closeDragMouse(event) {
-            stopY = true;
             document.removeEventListener("mouseup", closeDragMouse);
             document.removeEventListener("mousemove", dragMouse);
+            if (md !== -1) clearInterval(md);
             const currX = event.clientX + offSet;
             const currY = event.clientY;
+            newSection.classList.toggle("dragging");
+            newSection.style.position = null;
+            newSection.style.transform = null;
+            newSection.style.width = null;
             const cols = document.querySelectorAll("[data-col]");
             const colZero = cols[0].getBoundingClientRect();
             const colOne = cols[1].getBoundingClientRect();
@@ -133,16 +160,13 @@ function sectionMoving(event, newSection) {
             const children = col.children;
             for (var i = 0;i < children.length;i++) {
                 var child = children[i].getBoundingClientRect();
-                console.log(child.y);
                 if (child.y >= currY) {
                     col.insertBefore(newSection, children[i]);
-                    newSection.style.transform = null;
                     return;
                 }
             }
             const addSectionDiv = col.querySelector(".add-section");
             col.insertBefore(newSection, addSectionDiv);
-            newSection.style.transform = null;
         }
     }
 }
