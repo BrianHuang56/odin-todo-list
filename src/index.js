@@ -20,7 +20,11 @@ function addSection(colNum) {
     const container = document.createElement("div");
     container.className = "section-container";
     const sectionHeader = document.createElement("div");
-    sectionHeader.textContent = sections[secNumber].header;
+    const headerText = document.createElement("div");
+    headerText.className = "section-header-text";
+    headerText.textContent = sections[secNumber].header;
+    headerText.addEventListener("click", () => {editSection(newSection.dataset.sec);});
+    sectionHeader.appendChild(headerText);
     sectionHeader.className = "section-header";
     sectionHeader.appendChild(dropDownContainer);
     sectionHeader.addEventListener("mouseenter", (event) => {
@@ -121,7 +125,7 @@ function sectionMoving(event, newSection) {
             xPos += event.movementX;
             newSection.style.transform = `translate(${xPos}px, ${yPos}px)`;
 
-            if (event.clientY < 75) {
+            if (event.clientY < 50) {
                 md = setInterval(function() {
                     scroll(-4);
                 }, 10);
@@ -175,7 +179,11 @@ function addTask(task, secNumber) {
     const taskNumber = sections[secNumber].tasks.length - 1;
     const t = document.createElement("div");
     t.className = "task";
-    t.textContent = task.name;
+    const text = document.createElement("p");
+    text.className = "task-text";
+    if (task.dueDate) text.innerHTML = task.name + "<br><span class=\"date\">" + task.dueDate + "</span>";
+    else text.innerHTML = task.name;
+    t.appendChild(text);
     t.dataset.task = taskNumber;
     t.addEventListener("mouseenter", (event) => {
         var img = event.currentTarget.querySelector("img");
@@ -229,8 +237,9 @@ function editTask(secNumber, taskNumber) {
         }
         const newT = task(taskName.value, taskDue.value, taskDesc.value);
         sections[secNumber].tasks[taskNumber] = newT;
-        const edit = document.querySelector("[data-sec=" + CSS.escape(secNumber) + "] > .section-container > [data-task=" + CSS.escape(taskNumber) + "]").childNodes[0];
-        edit.nodeValue = sections[secNumber].tasks[taskNumber].name;
+        const edit = document.querySelector("[data-sec=" + CSS.escape(secNumber) + "] > .section-container > [data-task=" + CSS.escape(taskNumber) + "] > p");
+        if (taskDue.value) edit.innerHTML =  taskName.value + "<br><span class=\"date\">" + taskDue.value + "</span>";
+        else edit.innerHTML = taskName.value;
         button.removeEventListener("click", eTask);
         dialog.close();
         event.preventDefault();
@@ -255,6 +264,10 @@ function removeSection(secNumber) {
         setTimeout(function() {rem.remove();}, 400);
         submit.removeEventListener("click", remSec);
     });
+}
+
+function editSection(secNumber) {
+    console.log("YUMMYGLUE");
 }
 
 function updateSections(secNumber) {

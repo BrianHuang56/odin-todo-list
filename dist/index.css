@@ -84,17 +84,30 @@ body {
     -webkit-transition:opacity 0.3s;
     opacity:0;
 }
+.section-header-text:hover {
+    cursor:pointer;
+    padding:2px;
+    text-shadow: 1px 1px 5px black;
+}
 .add-task, .task {
     border:1px solid rgba(0, 0, 0, 0.1);
     border-radius:5px;
 }
 .task {
+    align-items:center;
     display:flex;
     justify-content:space-between;
     transition:background-color 0.3s, max-height 0.7s, opacity 0.3s, padding 0.5s, font-size 0.5s;
     max-height:100px;
     -webkit-transition:background-color 0.3s, max-height 0.7s, opacity 0.3s, padding 0.5s, font-size 0.5s;
     padding:0.5rem;
+}
+.task-text {
+    margin:0;
+}
+.date {
+    color:rgb(0, 0, 0, 0.8);
+    font-size:12px;
 }
 .task:hover {
     cursor:pointer;
