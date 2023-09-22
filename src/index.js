@@ -84,17 +84,32 @@ function sectionMoving(event, newSection) {
     if (!sectionHeader.contains(event.target) || sectionHeader === event.target) {
         document.addEventListener("mousemove", dragMouse);
         document.addEventListener("mouseup", closeDragMouse);
+        document.addEventListener("scroll", dragScroll);
+        const placeHolder = document.createElement("div");
+        placeHolder.style.width = newSection.offsetWidth + "px";
+        placeHolder.style.height = newSection.offsetHeight + "px";
+        placeHolder.style.marginBottom = "3rem";
+        placeHolder.id = "placeholder";
         const ogX = event.clientX;
         const rect = sectionHeader.getBoundingClientRect();
         const width = newSection.offsetWidth;
         newSection.classList.toggle("dragging");
-        newSection.style.position = "absolute";
+        newSection.style.position = "fixed";
+        newSection.parentElement.insertBefore(placeHolder, newSection.nextSibling);
         newSection.style.width = width + "px";
+        newSection.style.zIndex = "200";
         const mid = rect.left + (rect.width / 2);
         const offSet = mid - ogX;
         let xPos = 0;
         let yPos = 0;
+        let scroll = document.documentElement.scrollTop;
         let md = -1;
+
+        function dragScroll() {
+            yPos += document.documentElement.scrollTop - scroll;
+            scroll = document.documentElement.scrollTop;
+            newSection.style.transform = `translate(${xPos}px, ${yPos}px)`;
+        }
 
         function dragMouse(event) {
             if (md !== -1) {
@@ -118,33 +133,32 @@ function sectionMoving(event, newSection) {
                     return;
                 }
                 window.scrollTo((scrollX), (scrollY + stepY));
-                yPos += stepY;
-                newSection.style.transform = `translate(${xPos}px, ${(yPos)}px)`;
             }
 
             xPos += event.movementX;
+            yPos += event.movementY;
             newSection.style.transform = `translate(${xPos}px, ${yPos}px)`;
 
             if (event.clientY < 50) {
                 md = setInterval(function() {
-                    scroll(-4);
+                    scroll(-8);
                 }, 10);
             }
     
             else if (event.clientY > (document.documentElement.clientHeight - newSection.clientHeight)) { 
                 md = setInterval(function() {
-                    scroll(4);
+                    scroll(8);
                 }, 10);
-            }
-            else {
-                yPos += event.movementY;
-                newSection.style.transform = `translate(${xPos}px, ${yPos}px)`;
             }
         }
 
         function closeDragMouse(event) {
+            document.documentElement.style.maxHeight = null;
+            const ph = document.getElementById("placeholder");
+            ph.remove();
             document.removeEventListener("mouseup", closeDragMouse);
             document.removeEventListener("mousemove", dragMouse);
+            document.removeEventListener("scroll", dragScroll);
             if (md !== -1) clearInterval(md);
             const currX = event.clientX + offSet;
             const currY = event.clientY;
@@ -152,6 +166,7 @@ function sectionMoving(event, newSection) {
             newSection.style.position = null;
             newSection.style.transform = null;
             newSection.style.width = null;
+            newSection.style.zIndex = null;
             const cols = document.querySelectorAll("[data-col]");
             const colZero = cols[0].getBoundingClientRect();
             const colOne = cols[1].getBoundingClientRect();
