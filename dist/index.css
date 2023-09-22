@@ -84,10 +84,17 @@ body {
     -webkit-transition:opacity 0.3s;
     opacity:0;
 }
+.section-header-text {
+    border:none;
+}
+.section-header-text:focus {
+    outline:1px solid rgba(0, 0, 0, 0.2);
+    border-radius:5px;
+}
 .section-header-text:hover {
     cursor:pointer;
     padding:2px;
-    text-shadow: 1px 1px 5px black;
+    text-shadow: 1px 1px 5px rgba(0, 0, 0, 0.397);
 }
 .add-task, .task {
     border:1px solid rgba(0, 0, 0, 0.1);

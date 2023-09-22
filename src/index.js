@@ -20,10 +20,24 @@ function addSection(colNum) {
     const container = document.createElement("div");
     container.className = "section-container";
     const sectionHeader = document.createElement("div");
-    const headerText = document.createElement("div");
+    const headerText = document.createElement("input");
+    headerText.type = "text";
     headerText.className = "section-header-text";
-    headerText.textContent = sections[secNumber].header;
-    headerText.addEventListener("click", () => {editSection(newSection.dataset.sec);});
+    headerText.value = sections[secNumber].header;
+    headerText.addEventListener("click", (event) => {
+        const ht = event.currentTarget;
+        const ogVal = ht.value;
+        event.currentTarget.select();
+        event.stopPropagation();
+        document.addEventListener("click", function returnVal(event) {
+            if (event.target !== ht) ht.value = ogVal;
+            document.removeEventListener("click", returnVal);
+        });
+    })
+    headerText.addEventListener("keypress", (event) => {if (event.code == "Enter") {
+        sections[newSection.dataset.sec].header = event.currentTarget.value;
+        event.currentTarget.blur();
+    }});
     sectionHeader.appendChild(headerText);
     sectionHeader.className = "section-header";
     sectionHeader.appendChild(dropDownContainer);
@@ -39,7 +53,7 @@ function addSection(colNum) {
     const addTaskDiv = document.createElement("div");
     addTaskDiv.className = "add-task";
     addTaskDiv.innerHTML = "<img src=\"../images/plus.svg\" width=\"20px\" height=\"20px\">";
-    addTaskDiv.addEventListener("click", () => {verifyTaskAdd(secNumber);});
+    addTaskDiv.addEventListener("click", () => {verifyTaskAdd(newSection.dataset.sec);});
     const taskText = document.createElement("div");
     taskText.textContent = "Add Task";
     taskText.style.fontSize = "14px";
@@ -279,10 +293,6 @@ function removeSection(secNumber) {
         setTimeout(function() {rem.remove();}, 400);
         submit.removeEventListener("click", remSec);
     });
-}
-
-function editSection(secNumber) {
-    console.log("YUMMYGLUE");
 }
 
 function updateSections(secNumber) {
