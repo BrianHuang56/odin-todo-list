@@ -343,7 +343,11 @@ function convertRemToPixels(rem) {
 
 function addSectionEvent(div) {
     const input = div.querySelector(".new-section-input");
-    div.addEventListener("click", () => {input.focus();});
+    div.addEventListener("click", (event) => {
+        input.focus();
+        event.stopPropagation();
+        document.addEventListener("click", () => {input.value = "";});
+    });
     input.addEventListener("focusin", () => {
         div.style.opacity = "1";
         div.style.cursor = "text";
@@ -413,14 +417,10 @@ const dialogBox = taskDialog.querySelector(".dialog-box");
 const confirmDialog = document.querySelector("#confirmation-dialog");
 
 document.addEventListener("mousedown", function clickClose(event) {
-    if (!dialogBox.contains(event.target)) {
-        taskDialog.close();
-    }
+    if (!dialogBox.contains(event.target)) {taskDialog.close();}
 });
 
-confirmDialog.querySelector("#confirm-cancel").addEventListener("click", () => {
-    confirmDialog.close();
-});
+confirmDialog.querySelector("#confirm-cancel").addEventListener("click", () => {confirmDialog.close();});
 
 dialogBox.querySelector("#task-cancel").addEventListener("click", (event) => {
     event.preventDefault();
@@ -431,9 +431,7 @@ dialogBox.querySelector("#task-cancel").addEventListener("click", (event) => {
     taskDialog.close();
 });
 
-for (var i = 0;i < addSectionDivs.length;i++) {
-    addSectionEvent(addSectionDivs[i]);
-}
+for (var i = 0;i < addSectionDivs.length;i++) {addSectionEvent(addSectionDivs[i]);}
 
 document.addEventListener("click", (event) => {
     hideMenus(event);
