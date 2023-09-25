@@ -34,19 +34,22 @@ function addSection(colNum) {
         ht.remove();
         htInput.select();
         event.stopPropagation();
-        document.addEventListener("click", function returnVal(event) {
+        document.addEventListener("click", returnVal);
+        htInput.addEventListener("keypress", (event) => {if (event.code == "Enter") {
+            sections[newSection.dataset.sec].header = event.currentTarget.value;
+            ht.textContent = event.currentTarget.value;
+            htInput.remove();
+            sh.insertBefore(ht, sh.firstChild);
+            document.removeEventListener("click", returnVal);
+        }});
+
+        function returnVal(event) {
             if (event.target !== htInput) {
                 sh.insertBefore(ht, htInput);
                 htInput.remove();
                 document.removeEventListener("click", returnVal);
             }
-        });
-        htInput.addEventListener("keypress", (event) => {if (event.code == "Enter") {
-            sections[newSection.dataset.sec].header = event.currentTarget.value;
-            ht.textContent = event.currentTarget.value;
-            sh.insertBefore(ht, htInput);
-            htInput.remove();
-        }});
+        }
     });
     sectionHeader.appendChild(headerText);
     sectionHeader.className = "section-header";
