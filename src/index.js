@@ -20,24 +20,34 @@ function addSection(colNum) {
     const container = document.createElement("div");
     container.className = "section-container";
     const sectionHeader = document.createElement("div");
-    const headerText = document.createElement("input");
-    headerText.type = "text";
+    const headerText = document.createElement("div");
     headerText.className = "section-header-text";
-    headerText.value = sections[secNumber].header;
+    headerText.textContent = sections[secNumber].header;
     headerText.addEventListener("click", (event) => {
+        const htInput = document.createElement("input");
         const ht = event.currentTarget;
-        const ogVal = ht.value;
-        event.currentTarget.select();
+        htInput.type = "text";
+        const ogVal = ht.textContent;
+        htInput.value = ogVal;
+        const sh = ht.parentElement;
+        sh.insertBefore(htInput, ht);
+        ht.remove();
+        htInput.select();
         event.stopPropagation();
         document.addEventListener("click", function returnVal(event) {
-            if (event.target !== ht) ht.value = ogVal;
-            document.removeEventListener("click", returnVal);
+            if (event.target !== htInput) {
+                sh.insertBefore(ht, htInput);
+                htInput.remove();
+                document.removeEventListener("click", returnVal);
+            }
         });
-    })
-    headerText.addEventListener("keypress", (event) => {if (event.code == "Enter") {
-        sections[newSection.dataset.sec].header = event.currentTarget.value;
-        event.currentTarget.blur();
-    }});
+        htInput.addEventListener("keypress", (event) => {if (event.code == "Enter") {
+            sections[newSection.dataset.sec].header = event.currentTarget.value;
+            ht.textContent = event.currentTarget.value;
+            sh.insertBefore(ht, htInput);
+            htInput.remove();
+        }});
+    });
     sectionHeader.appendChild(headerText);
     sectionHeader.className = "section-header";
     sectionHeader.appendChild(dropDownContainer);
@@ -69,7 +79,7 @@ function addSection(colNum) {
 function verifyTaskAdd(secNumber) {
     const dialog = document.querySelector("#task-dialog");
     dialog.querySelector(".dialog-header").childNodes[0].nodeValue = "Add Task";
-    const button = dialog.querySelector("#task-submit")
+    const button = dialog.querySelector("#task-submit");
     button.textContent = "Add Task";
     dialog.showModal();
     button.addEventListener("click", function taskTemp(event) {
@@ -99,6 +109,7 @@ function sectionMoving(event, newSection) {
         document.addEventListener("mousemove", dragMouse);
         document.addEventListener("mouseup", closeDragMouse);
         document.addEventListener("scroll", dragScroll);
+        sectionHeader.style.cursor = "grabbing";
         const placeHolder = document.createElement("div");
         placeHolder.style.width = newSection.offsetWidth + "px";
         placeHolder.style.height = newSection.offsetHeight + "px";
@@ -176,6 +187,7 @@ function sectionMoving(event, newSection) {
             if (md !== -1) clearInterval(md);
             const currX = event.clientX + offSet;
             const currY = event.clientY;
+            sectionHeader.style.cursor = "grab";
             newSection.classList.toggle("dragging");
             newSection.style.position = null;
             newSection.style.transform = null;
@@ -415,6 +427,10 @@ const addSectionDivs = document.getElementsByClassName("add-section");
 const taskDialog = document.querySelector("#task-dialog");
 const dialogBox = taskDialog.querySelector(".dialog-box");
 const confirmDialog = document.querySelector("#confirmation-dialog");
+const docHeader = document.querySelector("#header");
+const content = document.querySelector("#content");
+const footer = document.querySelector("#footer");
+content.style.minHeight = document.documentElement.clientHeight - docHeader.clientHeight - footer.clientHeight - convertRemToPixels(1.5) + "px";
 
 document.addEventListener("mousedown", function clickClose(event) {
     if (!dialogBox.contains(event.target)) {taskDialog.close();}
