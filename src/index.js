@@ -252,7 +252,7 @@ function addTask(task, secNumber) {
     taskDropDownContainer.appendChild(tripleDot);
     taskDropDownContainer.appendChild(taskDropDown);
     t.appendChild(taskDropDownContainer);
-    const container = document.querySelector("[data-sec=" + CSS.escape(secNumber) + "] .section-container");
+    const container = document.querySelector("[data-sec=" + CSS.escape(secNumber) + "] > .section-container");
     const addTaskDiv = container.querySelector(".add-task");
     container.insertBefore(t, addTaskDiv);
 }
