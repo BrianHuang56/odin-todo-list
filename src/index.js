@@ -89,9 +89,15 @@ function verifyTaskAdd(secNumber) {
         const taskName = dialog.querySelector("#task-name");
         const taskDue = dialog.querySelector("#task-due");
         const taskDesc = dialog.querySelector("#task-desc");
+        const taskPrio = dialog.querySelector("#task-prio");
         if (taskName.validity.valueMissing) {
             taskName.setCustomValidity("Please fill out this field");
-            taskName.addEventListener("input", function() {taskName.setCustomValidity("");});
+            taskName.addEventListener("input", () => {taskName.setCustomValidity("");});
+            return;
+        }
+        if (taskPrio.value === "") {
+            taskPrio.setCustomValidity("Please select a valid option");
+            taskPrio.addEventListener("input", () => {taskPrio.setCustomValidity("")});
             return;
         }
         const t = task(taskName.value, taskDue.value, taskDesc.value);
@@ -272,6 +278,7 @@ function editTask(secNumber, taskNumber) {
     taskName.value = t.name;
     taskDue.value = t.dueDate;
     taskDesc.value = t.desc;
+
     dialog.showModal();
     button.addEventListener("click", function eTask(event) {
         if (taskName.validity.valueMissing) {
@@ -418,11 +425,12 @@ const section = (head) => {
     return {header, tasks};
 }
 
-const task = (n, due, d) => {
+const task = (n, due, d, p) => {
     let name = n;
     let dueDate = due;
     let desc = d;
-    return {name, dueDate, desc};
+    let prio = p;
+    return {name, dueDate, desc, prio};
 }
 
 var sections = [];

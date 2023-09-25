@@ -44,6 +44,15 @@
                             <input type="date" id="task-due">
                             <label for="task-desc">Description</label>
                             <textarea type="text" id="task-desc" rows="4" cols="32"></textarea>
+                            <label for="task-prio">Priority</label>
+                            <select name="priority" id="task-prio">
+                                <option value="" disabled selected>Select your option</option>
+                                <option value="0">Top Priority</option>
+                                <option value="1">High Priority</option>
+                                <option value="2">Mid Priority</option>
+                                <option value="3">Low Priority</option>
+                                <option value="4">No Priority</option>
+                            </select>
                         </div>
                         <div class="dialog-buttons">
                             <button type="submit" id="task-submit"></button>
@@ -60,7 +69,7 @@
             </dialog>
         </div>
         <div id="footer">
-            Copyright © 2023 Brian Huang
+            Copyright © 2023 Brian H.
         </div>
         <script src="main.js"></script>
     </body>
