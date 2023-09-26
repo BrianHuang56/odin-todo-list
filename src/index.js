@@ -474,7 +474,7 @@ const confirmDialog = document.querySelector("#confirmation-dialog");
 const docHeader = document.querySelector("#header");
 const content = document.querySelector("#content");
 const footer = document.querySelector("#footer");
-content.style.minHeight = document.documentElement.clientHeight - docHeader.clientHeight - footer.clientHeight - convertRemToPixels(1.5) + "px";
+content.style.minHeight = document.documentElement.clientHeight - docHeader.clientHeight - footer.clientHeight - convertRemToPixels(3) + "px";
 
 document.addEventListener("mousedown", function clickClose(event) {
     if (!dialogBox.contains(event.target)) {taskDialog.close();}
