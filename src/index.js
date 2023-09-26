@@ -84,12 +84,18 @@ function verifyTaskAdd(secNumber) {
     dialog.querySelector(".dialog-header").childNodes[0].nodeValue = "Add Task";
     const button = dialog.querySelector("#task-submit");
     button.textContent = "Add Task";
+    const taskName = dialog.querySelector("#task-name");
+    const taskDue = dialog.querySelector("#task-due");
+    const taskDesc = dialog.querySelector("#task-desc");
+    const taskPrio = dialog.querySelector("#task-prio")
+    const taskStatus = dialog.querySelector("#task-status");
+    taskName.value = null;
+    taskDue.value = null;
+    taskDesc.value = null;
+    taskPrio.value = "";
+    taskStatus.value = "";
     dialog.showModal();
     button.addEventListener("click", function taskTemp(event) {
-        const taskName = dialog.querySelector("#task-name");
-        const taskDue = dialog.querySelector("#task-due");
-        const taskDesc = dialog.querySelector("#task-desc");
-        const taskPrio = dialog.querySelector("#task-prio");
         if (taskName.validity.valueMissing) {
             taskName.setCustomValidity("Please fill out this field");
             taskName.addEventListener("input", () => {taskName.setCustomValidity("");});
@@ -100,10 +106,17 @@ function verifyTaskAdd(secNumber) {
             taskPrio.addEventListener("input", () => {taskPrio.setCustomValidity("")});
             return;
         }
-        const t = task(taskName.value, taskDue.value, taskDesc.value);
+        if (taskStatus.value === "") {
+            taskStatus.setCustomValidity("Please select a valid option");
+            taskStatus.addEventListener("input", () => {taskStatus.setCustomValidity("")});
+            return;
+        }
+        const t = task(taskName.value, taskDue.value, taskDesc.value, taskPrio.value, taskStatus.value);
         taskName.value = null;
         taskDue.value = null;
         taskDesc.value = null;
+        taskPrio.value = "";
+        taskStatus.value = "";
         sections[secNumber].tasks.push(t);
         addTask(t, secNumber);
         dialog.close();
@@ -263,6 +276,9 @@ function addTask(task, secNumber) {
     t.appendChild(taskDropDownContainer);
     const container = document.querySelector("[data-sec=" + CSS.escape(secNumber) + "] > .section-container");
     const addTaskDiv = container.querySelector(".add-task");
+    if (task.status === "0") t.style.backgroundColor = "rgba(255, 0, 0, 0.2)";
+    else if (task.status === "1") t.style.backgroundColor = "rgba(255, 255, 0, 0.2)";
+    else if (task.status === "2") t.style.backgroundColor = "rgba(0, 255, 0, 0.2)";
     container.insertBefore(t, addTaskDiv);
 }
 
@@ -275,10 +291,13 @@ function editTask(secNumber, taskNumber) {
     const taskName = dialog.querySelector("#task-name");
     const taskDue = dialog.querySelector("#task-due");
     const taskDesc = dialog.querySelector("#task-desc");
+    const taskPrio = dialog.querySelector("#task-prio");
+    const taskStatus = dialog.querySelector("#task-status");
     taskName.value = t.name;
     taskDue.value = t.dueDate;
     taskDesc.value = t.desc;
-
+    taskPrio.value = t.prio;
+    taskStatus.value = t.status;
     dialog.showModal();
     button.addEventListener("click", function eTask(event) {
         if (taskName.validity.valueMissing) {
@@ -286,11 +305,24 @@ function editTask(secNumber, taskNumber) {
             taskName.addEventListener("input", function() {taskName.setCustomValidity("");});
             return;
         }
-        const newT = task(taskName.value, taskDue.value, taskDesc.value);
+        if (taskPrio.value === "") {
+            taskPrio.setCustomValidity("Please select a valid option");
+            taskPrio.addEventListener("input", () => {taskPrio.setCustomValidity("")});
+            return;
+        }
+        if (taskStatus.value === "") {
+            taskStatus.setCustomValidity("Please select a valid option");
+            taskStatus.addEventListener("input", () => {taskStatus.setCustomValidity("")});
+            return;
+        }
+        const newT = task(taskName.value, taskDue.value, taskDesc.value, taskPrio.value, taskStatus.value);
         sections[secNumber].tasks[taskNumber] = newT;
-        const edit = document.querySelector("[data-sec=" + CSS.escape(secNumber) + "] > .section-container > [data-task=" + CSS.escape(taskNumber) + "] > p");
-        if (taskDue.value) edit.innerHTML =  taskName.value + "<br><span class=\"date\">" + taskDue.value + "</span>";
-        else edit.innerHTML = taskName.value;
+        const edit = document.querySelector("[data-sec=" + CSS.escape(secNumber) + "] > .section-container > [data-task=" + CSS.escape(taskNumber) + "]");
+        if (taskDue.value) edit.querySelector("p").innerHTML =  taskName.value + "<br><span class=\"date\">" + taskDue.value + "</span>";
+        else edit.querySelector("p").innerHTML = taskName.value;
+        if (newT.status === "0") edit.style.backgroundColor = "rgba(255, 0, 0, 0.2)";
+        else if (newT.status === "1") edit.style.backgroundColor = "rgba(255, 255, 0, 0.2)";
+        else if (newT.status === "2") edit.style.backgroundColor = "rgba(0, 255, 0, 0.2)";
         button.removeEventListener("click", eTask);
         dialog.close();
         event.preventDefault();
@@ -425,12 +457,13 @@ const section = (head) => {
     return {header, tasks};
 }
 
-const task = (n, due, d, p) => {
+const task = (n, due, d, p, s) => {
     let name = n;
     let dueDate = due;
     let desc = d;
     let prio = p;
-    return {name, dueDate, desc, prio};
+    let status = s;
+    return {name, dueDate, desc, prio, status};
 }
 
 var sections = [];
