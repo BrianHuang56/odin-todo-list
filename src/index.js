@@ -243,9 +243,29 @@ function addTask(task, secNumber) {
     const t = document.createElement("div");
     t.className = "task";
     const text = document.createElement("p");
+    const prio = document.createElement("span");
+    prio.style.fontSize = "12px";
+    switch (task.prio) {
+        case "0": prio.innerHTML = "Top Priority";
+        prio.style.color = "Red";
+        prio.style.fontWeight = "Bold";
+        break;
+        case "1": prio.innerHTML = "High Priority";
+        prio.style.color = "Red";
+        break;
+        case "2": prio.innerHTML = "Mid Priority";
+        prio.style.color = "royalblue";
+        break;
+        case "3": prio.innerHTML = "Low Priority";
+        prio.style.color = "Green";
+        break;
+        case "4": prio.innerHTML = "No Priority";
+        prio.style.color = "darkgreen";
+        break;
+    }
     text.className = "task-text";
-    if (task.dueDate) text.innerHTML = task.name + "<br><span class=\"date\">" + task.dueDate + "</span>";
-    else text.innerHTML = task.name;
+    if (task.dueDate) text.innerHTML = task.name + "<br><span class=\"date\">" + task.dueDate + "</span><br>" + prio.outerHTML;
+    else text.innerHTML = task.name + "<br>" + prio.outerHTML;
     t.appendChild(text);
     t.dataset.task = taskNumber;
     t.addEventListener("mouseenter", (event) => {
@@ -261,6 +281,7 @@ function addTask(task, secNumber) {
     });
     const taskDropDownContainer = document.createElement("div");
     const taskDropDown = document.createElement("div");
+    taskDropDown.style.bottom = "0px";
     taskDropDown.className = "drop-down";
     const taskDel = document.createElement("div");
     taskDel.textContent = "Delete";
@@ -318,8 +339,28 @@ function editTask(secNumber, taskNumber) {
         const newT = task(taskName.value, taskDue.value, taskDesc.value, taskPrio.value, taskStatus.value);
         sections[secNumber].tasks[taskNumber] = newT;
         const edit = document.querySelector("[data-sec=" + CSS.escape(secNumber) + "] > .section-container > [data-task=" + CSS.escape(taskNumber) + "]");
-        if (taskDue.value) edit.querySelector("p").innerHTML =  taskName.value + "<br><span class=\"date\">" + taskDue.value + "</span>";
-        else edit.querySelector("p").innerHTML = taskName.value;
+        const prio = document.createElement("span");
+        prio.style.fontSize = "12px";
+        switch (newT.prio) {
+            case "0": prio.innerHTML = "Top Priority";
+            prio.style.color = "Red";
+            prio.style.fontWeight = "Bold";
+            break;
+            case "1": prio.innerHTML = "High Priority";
+            prio.style.color = "Red";
+            break;
+            case "2": prio.innerHTML = "Mid Priority";
+            prio.style.color = "royalblue";
+            break;
+            case "3": prio.innerHTML = "Low Priority";
+            prio.style.color = "Green";
+            break;
+            case "4": prio.innerHTML = "No Priority";
+            prio.style.color = "Green";
+            break;
+        }
+        if (taskDue.value) edit.querySelector("p").innerHTML =  taskName.value + "<br><span class=\"date\">" + taskDue.value + "</span><br>" + prio.outerHTML;
+        else edit.querySelector("p").innerHTML = taskName.value + "<br>" + prio.outerHTML;
         if (newT.status === "0") edit.style.backgroundColor = "rgba(255, 0, 0, 0.2)";
         else if (newT.status === "1") edit.style.backgroundColor = "rgba(255, 255, 0, 0.2)";
         else if (newT.status === "2") edit.style.backgroundColor = "rgba(0, 255, 0, 0.2)";
@@ -427,7 +468,7 @@ function hideMenus(event) {
         act.classList.remove("active");
         act.style.opacity = "0";
         if (act.parentElement.parentElement.classList.contains("task")) {
-            act.style.bottom = "-" + (act.offsetHeight - convertRemToPixels(0.5) - 15) + "px";
+            act.style.bottom = "0px";
         }
         else act.style.bottom = "-" + (act.offsetHeight - 15) + "px";
         setTimeout(function() {act.style.visibility = "hidden";}, 300);
@@ -439,12 +480,12 @@ function showMenus(event) {
         var drop = event.target.parentElement.querySelector(".drop-down");
         drop.classList.add("active");
         if (drop.parentElement.parentElement.classList.contains("task")) {
-            drop.style.bottom = "-" + (drop.offsetHeight - convertRemToPixels(0.5) - 15) + "px";
+            drop.style.bottom = "0px";
         }
         else drop.style.bottom = "-" + (drop.offsetHeight - 15) + "px";
         drop.style.visibility = "visible";
         if (drop.parentElement.parentElement.classList.contains("task")) {
-            drop.style.bottom = "-" + (drop.offsetHeight - convertRemToPixels(0.5)) + "px";
+            drop.style.bottom = "-15px";
         }
         else drop.style.bottom = "-" + (drop.offsetHeight) + "px";
         drop.style.opacity = "1";
@@ -477,7 +518,12 @@ const footer = document.querySelector("#footer");
 content.style.minHeight = document.documentElement.clientHeight - docHeader.clientHeight - footer.clientHeight - convertRemToPixels(3) + "px";
 
 document.addEventListener("mousedown", function clickClose(event) {
-    if (!dialogBox.contains(event.target)) {taskDialog.close();}
+    if (!dialogBox.contains(event.target)) {
+        taskDialog.close();
+        const btn = dialogBox.querySelector("#task-submit");
+        const clone = btn.cloneNode(true);
+        btn.parentElement.replaceChild(clone, btn);
+    }
 });
 
 confirmDialog.querySelector("#confirm-cancel").addEventListener("click", () => {confirmDialog.close();});

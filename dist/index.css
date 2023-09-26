@@ -237,6 +237,15 @@ body {
     font-size:16px;
     margin-bottom:0.5rem;
 }
+#task-prio {
+    border-radius:5px;
+    margin-bottom:0.5rem;
+    font-size:16px;
+}
+#task-status {
+    border-radius:5px;
+    font-size:16px;
+}
 #confirmation-dialog {
     bottom:35%;
     font-size:28px;
