@@ -1,5 +1,4 @@
-function addSection(colNum) {
-    const secNumber = sections.length - 1;
+function addSection(sec, secNumber, addBefore) {
     const newSection = document.createElement("div");
     newSection.className = "section";
     newSection.dataset.sec = secNumber;
@@ -22,7 +21,7 @@ function addSection(colNum) {
     const sectionHeader = document.createElement("div");
     const headerText = document.createElement("div");
     headerText.className = "section-header-text";
-    headerText.textContent = sections[secNumber].header;
+    headerText.textContent = sec.header;
     headerText.addEventListener("click", (event) => {
         const htInput = document.createElement("input");
         const ht = event.currentTarget;
@@ -62,7 +61,7 @@ function addSection(colNum) {
         const img = event.currentTarget.querySelector("img");
         img.style.opacity = "0";
     });
-    sectionHeader.addEventListener("mousedown", (event) => {sectionMoving(event, newSection);});
+    sectionHeader.addEventListener("mousedown", (event) => {sectionMoving(event, newSection, secNumber);});
     const addTaskDiv = document.createElement("div");
     addTaskDiv.className = "add-task";
     addTaskDiv.innerHTML = "<img src=\"../images/plus.svg\" width=\"20px\" height=\"20px\">";
@@ -74,9 +73,9 @@ function addSection(colNum) {
     container.appendChild(sectionHeader);
     container.appendChild(addTaskDiv);
     newSection.appendChild(container);
-    const col = document.querySelector("[data-col=" + CSS.escape(colNum) + "]");
-    const addSec = col.querySelector(".add-section");
-    col.insertBefore(newSection, addSec);
+    const col = document.querySelector("[data-col=" + CSS.escape(sec.col) + "]");
+    const addBeforeDiv = col.querySelector(addBefore);
+    col.insertBefore(newSection, addBeforeDiv);
 }
 
 function verifyTaskAdd(secNumber) {
@@ -118,6 +117,8 @@ function verifyTaskAdd(secNumber) {
         taskPrio.value = "";
         taskStatus.value = "";
         sections[secNumber].tasks.push(t);
+        localStorage["sections"] = JSON.stringify(sections);
+
         addTask(t, secNumber);
         dialog.close();
         button.removeEventListener("click", taskTemp);
@@ -125,7 +126,8 @@ function verifyTaskAdd(secNumber) {
     });
 }
 
-function sectionMoving(event, newSection) {
+//TODO: normalize heights of all sections in order to make a pseudo grid to be able to utilize animations
+function sectionMoving(event, newSection, secNumber) {
     sectionHeader = newSection.querySelector(".section-header");
     if (!sectionHeader.contains(event.target) || sectionHeader === event.target) {
         document.addEventListener("mousemove", dragMouse);
@@ -220,20 +222,58 @@ function sectionMoving(event, newSection) {
             const colOne = cols[1].getBoundingClientRect();
             const colTwo = cols[2].getBoundingClientRect();
             var col;
-            if (currX > colZero.left && currX < colZero.left + colZero.width) col = cols[0];
-            else if (currX > colOne.left && currX < colOne.left + colOne.width) col = cols[1];
-            else if (currX > colTwo.left && currX < colTwo.left + colTwo.width) col = cols[2];
-            if (col === undefined) return;
-            const children = col.children;
-            for (var i = 0;i < children.length;i++) {
-                var child = children[i].getBoundingClientRect();
-                if (child.y >= currY) {
-                    col.insertBefore(newSection, children[i]);
-                    return;
+            var colChange = false;
+            const ogNP = sections[secNumber].numPrev;
+            if (currX > colZero.left && currX < colZero.left + colZero.width) {
+                col = cols[0];
+                if (sections[secNumber].col !== 0) {
+                    sections[secNumber].col = "0";
+                    colChange = true;
                 }
             }
-            const addSectionDiv = col.querySelector(".add-section");
-            col.insertBefore(newSection, addSectionDiv);
+            else if (currX > colOne.left && currX < colOne.left + colOne.width) {
+                col = cols[1];
+                if (sections[secNumber].col !== 1) {
+                    sections[secNumber].col = "1";
+                    colChange = true;
+                }
+            }
+            else if (currX > colTwo.left && currX < colTwo.left + colTwo.width) {
+                col = cols[2];
+                if (sections[secNumber].col !== 2) {
+                    sections[secNumber].col = "2";
+                    colChange = true;
+                }
+            }
+            if (col === undefined) return;
+            const children = col.children;
+            var inserted = false;
+            for (var i = 0;i < children.length;i++) {
+                var child = children[i].getBoundingClientRect();
+                if (child.y >= currY && !inserted) {
+                    col.insertBefore(newSection, children[i]);
+                    if (children[i].id === "placeholder") sections[secNumber].numPrev = i - 1;
+                    else {
+                        if (children[i].dataset.sec !== undefined) sections[children[i].dataset.sec].numPrev += 1;
+                        sections[secNumber].numPrev = i;
+                    }
+                    inserted = true;
+                }
+                else if (inserted) {
+                    var sn = children[i].dataset.sec;
+                    if (sn !== undefined) {
+                        if (colChange) sections[sn].numPrev += 1;
+                        else if (sections[sn].numPrev < ogNP) sections[sn].numPrev += 1;
+                    }
+                }
+            }
+            if (!inserted) {
+                const addSectionDiv = col.querySelector(".add-section");
+                if (colChange) sections[secNumber].numPrev = children.length - 1;
+                else sections[secNumber].numPrev = children.length - 3;
+                col.insertBefore(newSection, addSectionDiv);
+            }
+            localStorage["sections"] = JSON.stringify(sections);
         }
     }
 }
@@ -338,6 +378,7 @@ function editTask(secNumber, taskNumber) {
         }
         const newT = task(taskName.value, taskDue.value, taskDesc.value, taskPrio.value, taskStatus.value);
         sections[secNumber].tasks[taskNumber] = newT;
+        localStorage["sections"] = JSON.stringify(sections);
         const edit = document.querySelector("[data-sec=" + CSS.escape(secNumber) + "] > .section-container > [data-task=" + CSS.escape(taskNumber) + "]");
         const prio = document.createElement("span");
         prio.style.fontSize = "12px";
@@ -378,26 +419,35 @@ function removeSection(secNumber) {
     submit.addEventListener("click", function remSec() {
         confirmDialog.close();
         setTimeout(() => {}, 150);
+        const col = sections[secNumber].col;
+        const np = sections[secNumber].numPrev;
         sections.splice(secNumber, 1);
+        localStorage["sections"] = JSON.stringify(sections);
         const rem = document.querySelector("[data-sec=" + CSS.escape(secNumber) + "]");
         const container = rem.querySelector(".section-container");
         container.style.opacity = "0";
         rem.style.maxHeight = "0px";
         rem.style.fontSize = "0px";
-        updateSections(secNumber);
-        setTimeout(function() {rem.remove();}, 400);
+        setTimeout(() => {
+            rem.remove();
+            updateSections(secNumber, col, np);
+        }, 400);
         submit.removeEventListener("click", remSec);
     });
 }
 
-function updateSections(secNumber) {
-    const sections = document.querySelectorAll("[data-sec]");
+function updateSections(secNumber, col, np) {
+    const sectionsDiv = document.querySelectorAll("[data-sec]");
     for (var i = 0;i < sections.length;i++) {
-        var s = sections[i];
+        var s = sectionsDiv[i];
         if (s.dataset.sec > secNumber) {
             s.dataset.sec -= 1;
         }
+        if (sections[s.dataset.sec].col === col && sections[s.dataset.sec].numPrev > np) {
+            sections[s.dataset.sec].numPrev -= 1;
+        }
     }
+    localStorage["sections"] = JSON.stringify(sections);
 }
 
 function removeTask(secNumber, taskNumber) {
@@ -430,6 +480,7 @@ function updateTasks(secNumber, taskNumber) {
             t.dataset.task -= 1;
         }
     }
+    localStorage["sections"] = JSON.stringify(sections);
 }
 
 function convertRemToPixels(rem) {    
@@ -453,9 +504,11 @@ function addSectionEvent(div) {
     });
     input.addEventListener("keydown", (event) => {
         if (event.code === "Enter" && input.value !== "") {
-            var newSection = section(input.value);
+            var col = event.currentTarget.parentElement.parentElement;
+            var newSection = section(input.value, col.dataset.col, col.children.length - 1);
             sections.push(newSection);
-            addSection(event.currentTarget.parentElement.parentElement.dataset.col);
+            localStorage["sections"] = JSON.stringify(sections);
+            addSection(newSection, sections.length - 1, ".add-section");
             input.value = "";
             input.blur();
         }
@@ -492,10 +545,37 @@ function showMenus(event) {
     }
 }
 
-const section = (head) => {
+function displayStorage() {
+    sections = JSON.parse(localStorage["sections"]);
+    console.log(sections);
+    for (var i = 0;i < sections.length;i++) {
+        var sec = sections[i];
+        var col = document.querySelector("[data-col=" + CSS.escape(sec.col) + "]");
+        var children = col.children;
+        for (var x = 0;x < children.length;x++) {
+            if (children[x].dataset.sec !== undefined) {
+                var sn = children[x].dataset.sec;
+                if (sections[sn].numPrev > sec.numPrev) {
+                    addSection(sec, i, "[data-sec=" + CSS.escape(sn) + "]");
+                    break;
+                }
+            }
+            else {
+                addSection(sec, i, ".add-section");
+                break;
+            }
+        }
+        var tasks = sec.tasks;
+        for (var x = 0;x < tasks.length;x++) addTask(tasks[x], i);
+    }
+}
+
+const section = (head, c, np) => {
     let header = head;
     let tasks = [];
-    return {header, tasks};
+    let col = c;
+    let numPrev = np;
+    return {header, tasks, col, numPrev};
 }
 
 const task = (n, due, d, p, s) => {
@@ -516,6 +596,8 @@ const docHeader = document.querySelector("#header");
 const content = document.querySelector("#content");
 const footer = document.querySelector("#footer");
 content.style.minHeight = document.documentElement.clientHeight - docHeader.clientHeight - footer.clientHeight - convertRemToPixels(3) + "px";
+
+if (localStorage["sections"] !== undefined) displayStorage();
 
 document.addEventListener("mousedown", function clickClose(event) {
     if (!dialogBox.contains(event.target)) {
