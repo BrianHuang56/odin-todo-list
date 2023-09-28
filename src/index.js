@@ -62,16 +62,22 @@ function addSection(sec, secNumber, addBefore) {
         img.style.opacity = "0";
     });
     sectionHeader.addEventListener("mousedown", (event) => {sectionMoving(event, newSection, secNumber);});
+    const tasks = document.createElement("div");
+    tasks.className = "tasks";
     const addTaskDiv = document.createElement("div");
     addTaskDiv.className = "add-task";
     addTaskDiv.innerHTML = "<img src=\"../images/plus.svg\" width=\"20px\" height=\"20px\">";
-    addTaskDiv.addEventListener("click", () => {verifyTaskAdd(newSection.dataset.sec);});
+    addTaskDiv.addEventListener("click", (event) => {
+        event.stopImmediatePropagation();
+        verifyTaskAdd(newSection.dataset.sec);
+    });
     const taskText = document.createElement("div");
     taskText.textContent = "Add Task";
     taskText.style.fontSize = "14px";
     addTaskDiv.appendChild(taskText);
     container.appendChild(sectionHeader);
-    container.appendChild(addTaskDiv);
+    tasks.appendChild(addTaskDiv);
+    container.appendChild(tasks);
     newSection.appendChild(container);
     const col = document.querySelector("[data-col=" + CSS.escape(sec.col) + "]");
     const addBeforeDiv = col.querySelector(addBefore);
@@ -94,6 +100,7 @@ function verifyTaskAdd(secNumber) {
     taskPrio.value = "";
     taskStatus.value = "";
     dialog.showModal();
+    dialog.style.transform = "scale(1)";
     button.addEventListener("click", function taskTemp(event) {
         if (taskName.validity.valueMissing) {
             taskName.setCustomValidity("Please fill out this field");
@@ -118,35 +125,34 @@ function verifyTaskAdd(secNumber) {
         taskStatus.value = "";
         sections[secNumber].tasks.push(t);
         localStorage["sections"] = JSON.stringify(sections);
-
         addTask(t, secNumber);
-        dialog.close();
+        dialog.style.transform = "scale(0.05)";
+        setTimeout(() => {dialog.close();}, 200);
         button.removeEventListener("click", taskTemp);
         event.preventDefault();
     });
 }
 
-//TODO: normalize heights of all sections in order to make a pseudo grid to be able to utilize animations
 function sectionMoving(event, newSection, secNumber) {
     sectionHeader = newSection.querySelector(".section-header");
     if (!sectionHeader.contains(event.target) || sectionHeader === event.target) {
+        const addSec = document.querySelector(".add-section");
+        const width = newSection.offsetWidth;
+        newSection.style.width = width + "px";
+        newSection.style.zIndex = "200";
+        newSection.classList.toggle("dragging");
+        newSection.style.position = "fixed";
         document.addEventListener("mousemove", dragMouse);
         document.addEventListener("mouseup", closeDragMouse);
         document.addEventListener("scroll", dragScroll);
         sectionHeader.style.cursor = "grabbing";
         const placeHolder = document.createElement("div");
         placeHolder.style.width = newSection.offsetWidth + "px";
-        placeHolder.style.height = newSection.offsetHeight + "px";
-        placeHolder.style.marginBottom = "3rem";
+        placeHolder.style.height = addSec.offsetHeight + "px";
         placeHolder.id = "placeholder";
         const ogX = event.clientX;
         const rect = sectionHeader.getBoundingClientRect();
-        const width = newSection.offsetWidth;
-        newSection.classList.toggle("dragging");
-        newSection.style.position = "fixed";
         newSection.parentElement.insertBefore(placeHolder, newSection.nextSibling);
-        newSection.style.width = width + "px";
-        newSection.style.zIndex = "200";
         const mid = rect.left + (rect.width / 2);
         const offSet = mid - ogX;
         let xPos = 0;
@@ -224,28 +230,36 @@ function sectionMoving(event, newSection, secNumber) {
             var col;
             var colChange = false;
             const ogNP = sections[secNumber].numPrev;
+            const ogCol = sections[secNumber].col;
             if (currX > colZero.left && currX < colZero.left + colZero.width) {
                 col = cols[0];
-                if (sections[secNumber].col !== 0) {
+                if (sections[secNumber].col !== "0") {
                     sections[secNumber].col = "0";
                     colChange = true;
                 }
             }
             else if (currX > colOne.left && currX < colOne.left + colOne.width) {
                 col = cols[1];
-                if (sections[secNumber].col !== 1) {
+                if (sections[secNumber].col !== "1") {
                     sections[secNumber].col = "1";
                     colChange = true;
                 }
             }
             else if (currX > colTwo.left && currX < colTwo.left + colTwo.width) {
                 col = cols[2];
-                if (sections[secNumber].col !== 2) {
+                if (sections[secNumber].col !== "2") {
                     sections[secNumber].col = "2";
                     colChange = true;
                 }
             }
             if (col === undefined) return;
+            if (colChange) {
+                const children = cols[ogCol].children;
+                for (var i = 0;i < children.length;i++) {
+                    var sn = children[i].dataset.sec;
+                    if (sn !== undefined) sections[sn].numPrev -= 1;
+                }
+            }
             const children = col.children;
             var inserted = false;
             for (var i = 0;i < children.length;i++) {
@@ -317,7 +331,7 @@ function addTask(task, secNumber) {
         img.style.opacity = "0";
     });
     t.addEventListener("click", (event) => {
-        if (event.target === event.currentTarget) editTask(secNumber, taskNumber);
+        if (event.target.className !== "triple-dot") editTask(secNumber, taskNumber);
     });
     const taskDropDownContainer = document.createElement("div");
     const taskDropDown = document.createElement("div");
@@ -335,12 +349,12 @@ function addTask(task, secNumber) {
     taskDropDownContainer.appendChild(tripleDot);
     taskDropDownContainer.appendChild(taskDropDown);
     t.appendChild(taskDropDownContainer);
-    const container = document.querySelector("[data-sec=" + CSS.escape(secNumber) + "] > .section-container");
-    const addTaskDiv = container.querySelector(".add-task");
+    const tasks = document.querySelector("[data-sec=" + CSS.escape(secNumber) + "] > .section-container > .tasks");
+    const addTaskDiv = tasks.querySelector(".add-task");
     if (task.status === "0") t.style.backgroundColor = "rgba(255, 0, 0, 0.2)";
     else if (task.status === "1") t.style.backgroundColor = "rgba(255, 255, 0, 0.2)";
     else if (task.status === "2") t.style.backgroundColor = "rgba(0, 255, 0, 0.2)";
-    container.insertBefore(t, addTaskDiv);
+    tasks.insertBefore(t, addTaskDiv);
 }
 
 function editTask(secNumber, taskNumber) {
@@ -360,6 +374,7 @@ function editTask(secNumber, taskNumber) {
     taskPrio.value = t.prio;
     taskStatus.value = t.status;
     dialog.showModal();
+    dialog.style.transform = "scale(1)";
     button.addEventListener("click", function eTask(event) {
         if (taskName.validity.valueMissing) {
             taskName.setCustomValidity("Please fill out this field");
@@ -379,7 +394,7 @@ function editTask(secNumber, taskNumber) {
         const newT = task(taskName.value, taskDue.value, taskDesc.value, taskPrio.value, taskStatus.value);
         sections[secNumber].tasks[taskNumber] = newT;
         localStorage["sections"] = JSON.stringify(sections);
-        const edit = document.querySelector("[data-sec=" + CSS.escape(secNumber) + "] > .section-container > [data-task=" + CSS.escape(taskNumber) + "]");
+        const edit = document.querySelector("[data-sec=" + CSS.escape(secNumber) + "] > .section-container > .tasks > [data-task=" + CSS.escape(taskNumber) + "]");
         const prio = document.createElement("span");
         prio.style.fontSize = "12px";
         switch (newT.prio) {
@@ -400,13 +415,14 @@ function editTask(secNumber, taskNumber) {
             prio.style.color = "Green";
             break;
         }
+        dialog.style.transform = "scale(0.05)";
         if (taskDue.value) edit.querySelector("p").innerHTML =  taskName.value + "<br><span class=\"date\">" + taskDue.value + "</span><br>" + prio.outerHTML;
         else edit.querySelector("p").innerHTML = taskName.value + "<br>" + prio.outerHTML;
         if (newT.status === "0") edit.style.backgroundColor = "rgba(255, 0, 0, 0.2)";
         else if (newT.status === "1") edit.style.backgroundColor = "rgba(255, 255, 0, 0.2)";
         else if (newT.status === "2") edit.style.backgroundColor = "rgba(0, 255, 0, 0.2)";
         button.removeEventListener("click", eTask);
-        dialog.close();
+        setTimeout(() => {dialog.close();}, 200);
         event.preventDefault();
     });
 }
@@ -415,9 +431,11 @@ function editTask(secNumber, taskNumber) {
 function removeSection(secNumber) {
     const confirmDialog = document.querySelector("#confirmation-dialog");
     confirmDialog.showModal();
+    confirmDialog.style.transform = "scale(1)";
     const submit = confirmDialog.querySelector("#confirm-submit");
     submit.addEventListener("click", function remSec() {
-        confirmDialog.close();
+        confirmDialog.style.transform = "scale(0.05)";
+        setTimeout(() => {confirmDialog.close();}, 200);
         setTimeout(() => {}, 150);
         const col = sections[secNumber].col;
         const np = sections[secNumber].numPrev;
@@ -458,7 +476,7 @@ function removeTask(secNumber, taskNumber) {
         confirmDialog.close();
         setTimeout(() => {}, 150);
         sections[secNumber].tasks.splice(taskNumber, 1);
-        const rem = document.querySelector("[data-sec=" + CSS.escape(secNumber) + "] > .section-container > [data-task=" + CSS.escape(taskNumber) + "]");
+        const rem = document.querySelector("[data-sec=" + CSS.escape(secNumber) + "] > .section-container > .tasks > [data-task=" + CSS.escape(taskNumber) + "]");
         const drop = rem.children[0];
         drop.style.display = "none";
         rem.style.maxHeight = "0px";
@@ -600,15 +618,19 @@ content.style.minHeight = document.documentElement.clientHeight - docHeader.clie
 if (localStorage["sections"] !== undefined) displayStorage();
 
 document.addEventListener("mousedown", function clickClose(event) {
-    if (!dialogBox.contains(event.target)) {
-        taskDialog.close();
+    if (taskDialog.open && !dialogBox.contains(event.target)) {
+        taskDialog.style.transform = "scale(0.05)";
+        setTimeout(() => {taskDialog.close();}, 200);
         const btn = dialogBox.querySelector("#task-submit");
         const clone = btn.cloneNode(true);
         btn.parentElement.replaceChild(clone, btn);
     }
 });
 
-confirmDialog.querySelector("#confirm-cancel").addEventListener("click", () => {confirmDialog.close();});
+confirmDialog.querySelector("#confirm-cancel").addEventListener("click", () => {
+    confirmDialog.style.transform = "scale(0.05)";
+    setTimeout(() => {confirmDialog.close();}, 200);
+});
 
 dialogBox.querySelector("#task-cancel").addEventListener("click", (event) => {
     event.preventDefault();
@@ -616,7 +638,8 @@ dialogBox.querySelector("#task-cancel").addEventListener("click", (event) => {
     for (var i = 0;i < inp.length;i++) {
         inp[i].value = null;
     }
-    taskDialog.close();
+    taskDialog.style.transform = "scale(0.05)";
+    setTimeout(() => {taskDialog.close();}, 200);
 });
 
 for (var i = 0;i < addSectionDivs.length;i++) {addSectionEvent(addSectionDivs[i]);}
