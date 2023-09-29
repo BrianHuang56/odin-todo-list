@@ -136,29 +136,30 @@ function verifyTaskAdd(secNumber) {
 function sectionMoving(event, newSection, secNumber) {
     sectionHeader = newSection.querySelector(".section-header");
     if (!sectionHeader.contains(event.target) || sectionHeader === event.target) {
-        const addSec = document.querySelector(".add-section");
-        const width = newSection.offsetWidth;
-        newSection.style.width = width + "px";
-        newSection.style.zIndex = "200";
-        newSection.classList.toggle("dragging");
-        newSection.style.position = "fixed";
         document.addEventListener("mousemove", dragMouse);
         document.addEventListener("mouseup", closeDragMouse);
         document.addEventListener("scroll", dragScroll);
         sectionHeader.style.cursor = "grabbing";
         const placeHolder = document.createElement("div");
         placeHolder.style.width = newSection.offsetWidth + "px";
-        placeHolder.style.height = addSec.offsetHeight + "px";
+        placeHolder.style.height = newSection.offsetHeight + "px";
+        placeHolder.style.marginBottom = "3rem";
         placeHolder.id = "placeholder";
         const ogX = event.clientX;
         const rect = sectionHeader.getBoundingClientRect();
+        const width = newSection.offsetWidth;
+        newSection.classList.toggle("dragging");
+        newSection.style.position = "fixed";
         newSection.parentElement.insertBefore(placeHolder, newSection.nextSibling);
+        newSection.style.width = width + "px";
+        newSection.style.zIndex = "200";
         const mid = rect.left + (rect.width / 2);
         const offSet = mid - ogX;
         let xPos = 0;
-        let yPos = 0;
         let scroll = document.documentElement.scrollTop;
-        let md = -1;
+        let yPos = -document.documentElement.scrollTop;
+        let md = -1;    
+        dragScroll();
 
         function dragScroll() {
             yPos += document.documentElement.scrollTop - scroll;
