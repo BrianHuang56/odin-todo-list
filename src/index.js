@@ -138,7 +138,6 @@ function sectionMoving(event, newSection, secNumber) {
     if (!sectionHeader.contains(event.target) || sectionHeader === event.target) {
         document.addEventListener("mousemove", dragMouse);
         document.addEventListener("mouseup", closeDragMouse);
-        document.addEventListener("scroll", dragScroll);
         sectionHeader.style.cursor = "grabbing";
         const placeHolder = document.createElement("div");
         placeHolder.style.width = newSection.offsetWidth + "px";
@@ -159,13 +158,7 @@ function sectionMoving(event, newSection, secNumber) {
         let scroll = document.documentElement.scrollTop;
         let yPos = -document.documentElement.scrollTop;
         let md = -1;    
-        dragScroll();
-
-        function dragScroll() {
-            yPos += document.documentElement.scrollTop - scroll;
-            scroll = document.documentElement.scrollTop;
-            newSection.style.transform = `translate(${xPos}px, ${yPos}px)`;
-        }
+        newSection.style.transform = `translate(${xPos}px, ${yPos}px)`;
 
         function dragMouse(event) {
             if (md !== -1) {
