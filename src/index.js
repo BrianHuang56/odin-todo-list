@@ -155,7 +155,6 @@ function sectionMoving(event, newSection, secNumber) {
         const mid = rect.left + (rect.width / 2);
         const offSet = mid - ogX;
         let xPos = 0;
-        let scroll = document.documentElement.scrollTop;
         let yPos = -document.documentElement.scrollTop;
         let md = -1;    
         newSection.style.transform = `translate(${xPos}px, ${yPos}px)`;
@@ -207,7 +206,6 @@ function sectionMoving(event, newSection, secNumber) {
             ph.remove();
             document.removeEventListener("mouseup", closeDragMouse);
             document.removeEventListener("mousemove", dragMouse);
-            document.removeEventListener("scroll", dragScroll);
             if (md !== -1) clearInterval(md);
             const currX = event.clientX + offSet;
             const currY = event.clientY;
@@ -257,8 +255,9 @@ function sectionMoving(event, newSection, secNumber) {
             const children = col.children;
             var inserted = false;
             for (var i = 0;i < children.length;i++) {
-                var child = children[i].getBoundingClientRect();
-                if (child.y >= currY && !inserted) {
+                var rect = children[i].getBoundingClientRect();
+                var offset = children[i].clientHeight;
+                if (rect.y + (offset / 2) >= currY && !inserted) {
                     col.insertBefore(newSection, children[i]);
                     if (children[i].id === "placeholder") sections[secNumber].numPrev = i - 1;
                     else {
@@ -325,9 +324,10 @@ function addTask(task, secNumber) {
         img.style.opacity = "0";
     });
     t.addEventListener("click", (event) => {
-        if (event.target.className !== "triple-dot") editTask(secNumber, taskNumber);
+        if (!event.currentTarget.querySelector(".drop-container").contains(event.target)) editTask(secNumber, taskNumber);
     });
     const taskDropDownContainer = document.createElement("div");
+    taskDropDownContainer.className = "drop-container";
     const taskDropDown = document.createElement("div");
     taskDropDown.style.bottom = "0px";
     taskDropDown.className = "drop-down";
@@ -424,9 +424,9 @@ function editTask(secNumber, taskNumber) {
 
 function removeSection(secNumber) {
     const confirmDialog = document.querySelector("#confirmation-dialog");
+    const submit = confirmDialog.querySelector("#confirm-submit");
     confirmDialog.showModal();
     confirmDialog.style.transform = "scale(1)";
-    const submit = confirmDialog.querySelector("#confirm-submit");
     submit.addEventListener("click", function remSec() {
         confirmDialog.style.transform = "scale(0.05)";
         setTimeout(() => {confirmDialog.close();}, 200);
@@ -465,6 +465,7 @@ function updateSections(secNumber, col, np) {
 function removeTask(secNumber, taskNumber) {
     const confirmDialog = document.querySelector("#confirmation-dialog");
     confirmDialog.showModal();
+    confirmDialog.style.transform = "scale(1)";
     const submit = confirmDialog.querySelector("#confirm-submit");
     submit.addEventListener("click", function remTask() {
         confirmDialog.close();
