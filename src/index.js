@@ -4,7 +4,7 @@ function addSection(sec, secNumber, addBefore) {
     newSection.dataset.sec = secNumber;
     const dropDownContainer = document.createElement("div");
     const tripleDot = document.createElement("img");
-    tripleDot.src = "../images/dots-vertical.svg";
+    tripleDot.src = "images/dots-vertical.svg";
     tripleDot.style.width = "20px";
     tripleDot.className = "triple-dot";
     const dropDown = document.createElement("div");
@@ -66,7 +66,7 @@ function addSection(sec, secNumber, addBefore) {
     tasks.className = "tasks";
     const addTaskDiv = document.createElement("div");
     addTaskDiv.className = "add-task";
-    addTaskDiv.innerHTML = "<img src=\"../images/plus.svg\" width=\"20px\" height=\"20px\">";
+    addTaskDiv.innerHTML = "<img src=\"images/plus.svg\" width=\"20px\" height=\"20px\">";
     addTaskDiv.addEventListener("click", (event) => {
         event.stopImmediatePropagation();
         verifyTaskAdd(newSection.dataset.sec);
@@ -336,7 +336,7 @@ function addTask(task, secNumber) {
     taskDropDown.dataset.task = taskNumber;
     taskDel.addEventListener("click", () => {removeTask(secNumber, t.dataset.task);});
     const tripleDot = document.createElement("img");
-    tripleDot.src = "../images/dots-vertical.svg";
+    tripleDot.src = "images/dots-vertical.svg";
     tripleDot.style.width = "20px";
     tripleDot.className = "triple-dot";
     taskDropDown.appendChild(taskDel);
