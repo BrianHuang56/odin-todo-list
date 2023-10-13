@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="utf-8">
+        <title>To-do List Project</title>
+        <link rel="stylesheet" href="index.css">
+    </head>
+    <body>
+        <div id="header">
+            <span id="header-text">Project Manager</span>
+        </div>
+        <div id="content">
+            <div class="col" data-col="0">
+                <div class="add-section">
+                    <img src="images/plus.svg" width="20px" height="20px">
+                    <input type="text" class="new-section-input" id="new-section-name-0" placeholder="Add Section">
+                </div>
+            </div>
+            <div class="col" data-col="1">
+                <div class="add-section">
+                    <img src="images/plus.svg" width="20px" height="20px">
+                    <input type="text" class="new-section-input" id="new-section-name-1" placeholder="Add Section">
+                </div>
+            </div>
+            <div class="col" data-col="2">
+                <div class="add-section">
+                    <img src="images/plus.svg" width="20px" height="20px">
+                    <input type="text" class="new-section-input" id="new-section-name-2" placeholder="Add Section">
+                </div>
+            </div>
+            <dialog id="task-dialog">
+                <form method="post" autocomplete="off">
+                    <div class="dialog-box">
+                        <div class="dialog-header">
+                            SAMPLE TEXT
+                            <button value="cancel" id="task-cancel" formmethod="dialog">
+                                <img src="images/window-close.svg" width="20px">
+                            </button>
+                        </div>
+                        <div class="dialog-inputs">
+                            <label for="task-name">Name</label>
+                            <input type="text" id="task-name" required>
+                            <label for="task-due">Due Date</label>
+                            <input type="date" id="task-due">
+                            <label for="task-desc">Description</label>
+                            <textarea type="text" id="task-desc" rows="4" cols="32"></textarea>
+                            <label for="task-prio">Priority</label>
+                            <select name="priority" id="task-prio">
+                                <option value="" disabled selected>Select your option</option>
+                                <option value="0">Top Priority</option>
+                                <option value="1">High Priority</option>
+                                <option value="2">Mid Priority</option>
+                                <option value="3">Low Priority</option>
+                                <option value="4">No Priority</option>
+                            </select>
+                            <label for="task-status">Status</label>
+                            <select name="status" id="task-status">
+                                <option value="" disabled selected>Select your option</option>
+                                <option value="0">Not started</option>
+                                <option value="1">In progress</option>
+                                <option value="2">Finished</option>
+                            </select>
+                        </div>
+                        <div class="dialog-buttons">
+                            <button type="submit" id="task-submit"></button>
+                        </div>
+                    </div>
+                </form>
+            </dialog>
+            <dialog id="confirmation-dialog">
+                Are you sure you want to?
+                <div id="confirm-buttons">
+                    <button id="confirm-cancel">No</button>
+                    <button id="confirm-submit">Yes</button>
+                </div>
+            </dialog>
+        </div>
+        <div id="footer">
+            Copyright © 2023 Brian H.
+        </div>
+        <script src="main.js"></script>
+    </body>
+</html>
