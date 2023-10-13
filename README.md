@@ -1,2 +1,5 @@
 # Project Manager App
-Manage projects and tasks utilizing a grid-like system
+- Create sections in a grid-like system
+- Create tasks that are color coded based upon their status
+- Drag sections around to organize them as desired
+- Data is saved to local storage
